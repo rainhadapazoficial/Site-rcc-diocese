@@ -103,8 +103,11 @@ export function Navbar() {
                             <img
                                 src="/logo-diocese.png"
                                 alt="RCC Diocese de Sinop Logo"
-                                className="w-24 h-24 object-contain"
+                                className="w-16 h-16 object-contain"
                             />
+                            <span className="hidden sm:block text-2xl font-bold text-brand-blue tracking-tighter">
+                                RCC Diocese de Sinop
+                            </span>
                         </Link>
                     </div>
 

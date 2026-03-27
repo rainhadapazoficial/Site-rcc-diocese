@@ -15,11 +15,11 @@ export function Footer() {
                                 alt="RCC Diocese de Sinop Logo"
                                 className="w-14 h-14 object-contain"
                             />
-                            <span className="text-xl font-bold italic">RCC Diocese de Sinop</span>
+                            <span className="text-xl font-bold italic tracking-tight">RCC Diocese de Sinop</span>
                         </div>
                         <p className="text-blue-100 text-sm leading-relaxed">
                             Renovação Carismática Católica da Diocese de Sinop/MT. <br />
-                            A serviço da Igreja, promovendo a cultura de Pentecostes.
+                            Um lugar de encontro, oração e renovação espiritual.
                         </p>
                         <div className="flex gap-4">
                             <a href="https://www.instagram.com/rccdiocesedesinop" target="_blank" rel="noopener noreferrer" className="hover:text-brand-gold transition-colors">
