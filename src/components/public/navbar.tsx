@@ -72,8 +72,8 @@ export function Navbar() {
 
             const updatedLinks = defaultNavLinks.map(link => {
                 const dynamicChildren = data
-                    .filter(p => normalize(p.parent_menu || "") === normalize(link.name))
-                    .map(p => ({
+                    .filter((p: { parent_menu: string | null; title: string; slug: string }) => normalize(p.parent_menu || "") === normalize(link.name))
+                    .map((p: { title: string; slug: string }) => ({
                         name: p.title,
                         href: p.slug === 'festa-rei-jesus' ? '/festa-rei-jesus' : `/p/${p.slug}`
                     }));
