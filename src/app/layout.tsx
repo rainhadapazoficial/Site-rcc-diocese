@@ -14,16 +14,16 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Rainha da Paz | Grupo de Oração Sinop",
-    template: "%s | Rainha da Paz"
+    default: "RCC Diocese de Sinop",
+    template: "%s | RCC Diocese de Sinop"
   },
   description: "Portal oficial da Renovação Carismática Católica na Diocese de Sinop/MT. Encontre Grupos de Oração, missas e eventos religiosos em Mato Grosso.",
   keywords: ["RCC Mato Grosso", "Igreja Católica Sinop", "Grupo de Oração MT", "Renovação Carismática Católica", "Missa hoje Sinop"],
   openGraph: {
-    title: "Rainha da Paz | Grupo de Oração Sinop",
-    description: "Um encontro de amor com o Espírito Santo na Matriz da Paróquia Santo Antônio.",
-    url: "https://rainha-da-paz.vercel.app/",
-    siteName: "Rainha da Paz",
+    title: "RCC Diocese de Sinop",
+    description: "Um encontro de amor com o Espírito Santo na Diocese de Sinop.",
+    url: "https://site-rcc-diocese.vercel.app/",
+    siteName: "RCC Diocese de Sinop",
     locale: "pt_BR",
     type: "website",
   },
@@ -47,7 +47,7 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              "name": "Rainha da Paz",
+              "name": "RCC Diocese de Sinop",
               "url": "https://site-rcc-diocese.vercel.app/",
               "logo": "https://site-rcc-diocese.vercel.app/logo-diocese.png",
               "contactPoint": {
