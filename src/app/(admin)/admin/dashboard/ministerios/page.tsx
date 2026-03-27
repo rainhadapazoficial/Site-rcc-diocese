@@ -52,7 +52,7 @@ export default function MinisteriosAdminPage() {
             console.error("Error fetching coordinator history:", error);
             return [];
         }
-        return (data || []).map((r) => ({ nome: r.nome, gestao: r.gestao }));
+        return (data || []).map((r: { nome: string; gestao: string }) => ({ nome: r.nome, gestao: r.gestao }));
     }
 
     function addCoordinatorHistoryRow() {
@@ -110,7 +110,7 @@ export default function MinisteriosAdminPage() {
         const validHistory = coordinatorHistory.filter((h) => h.nome.trim() || h.gestao.trim());
         if (validHistory.length > 0) {
             await supabase.from("ministerio_coordinator_history").insert(
-                validHistory.map((h, i) => ({
+                validHistory.map((h: { nome: string; gestao: string }, i: number) => ({
                     ministerio_id: ministryId,
                     nome: h.nome.trim() || "(nome não informado)",
                     gestao: h.gestao.trim() || "(gestão não informada)",
