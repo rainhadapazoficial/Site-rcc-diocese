@@ -156,7 +156,7 @@ export default function NoticiasAdminPage() {
             }
 
             // 3. Terceiro: Sincronização de Estado (Remover da tela)
-            setPosts(prev => prev.filter(p => p.id !== post.id));
+            setPosts(prev => prev.filter((p: any) => p.id !== post.id));
 
             alert("Sucesso! O artigo foi excluído corretamente.");
 
@@ -327,7 +327,7 @@ export default function NoticiasAdminPage() {
                         <p>Comece a escrever e evangelizar online!</p>
                     </div>
                 ) : (
-                    posts.map((post) => (
+                    posts.map((post: any) => (
                         <Card key={post.id} className="group overflow-hidden rounded-[2.5rem] border-none shadow-sm hover:shadow-2xl transition-all duration-500 bg-white">
                             <div className="relative h-56 overflow-hidden">
                                 <img src={post.image_url} alt={post.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s]" />

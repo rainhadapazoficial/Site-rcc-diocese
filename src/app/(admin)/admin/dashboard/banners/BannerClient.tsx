@@ -34,7 +34,7 @@ export function BannerClient({ initialData }: BannerClientProps) {
         setStatus('idle');
 
         // Filter out completely empty banners
-        const validBanners = banners.filter(b => b.title || b.image_url);
+        const validBanners = banners.filter((b: any) => b.title || b.image_url);
 
         const { error } = await supabase
             .from('site_settings')
@@ -69,7 +69,7 @@ export function BannerClient({ initialData }: BannerClientProps) {
 
     const removeBanner = (index: number) => {
         if (banners.length <= 1) return;
-        const newBanners = banners.filter((_, i) => i !== index);
+        const newBanners = banners.filter((_, i: number) => i !== index);
         setBanners(newBanners);
         setActiveIndex(Math.max(0, index - 1));
     };
@@ -85,7 +85,7 @@ export function BannerClient({ initialData }: BannerClientProps) {
     return (
         <div className="space-y-8">
             <div className="flex flex-wrap gap-2">
-                {banners.map((_, idx) => (
+                {banners.map((_, idx: number) => (
                     <Button
                         key={idx}
                         variant={activeIndex === idx ? "default" : "outline"}

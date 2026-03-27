@@ -62,7 +62,7 @@ export default function PaginasAdminPage() {
                 {isLoading ? (
                     <p>Carregando páginas...</p>
                 ) : pages.length > 0 ? (
-                    pages.map((page) => (
+                    pages.map((page: any) => (
                         <Card key={page.id} className="rounded-3xl border-none shadow-sm hover:shadow-md transition-all">
                             <CardContent className="p-6 flex items-center justify-between">
                                 <div className="space-y-1">
