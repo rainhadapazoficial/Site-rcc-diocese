@@ -15,10 +15,10 @@ export function Footer() {
                                 alt="RCC Diocese de Sinop Logo"
                                 className="w-14 h-14 object-contain"
                             />
-                            <span className="text-xl font-bold italic">Rainha da Paz</span>
+                            <span className="text-xl font-bold italic">RCC Diocese de Sinop</span>
                         </div>
                         <p className="text-blue-100 text-sm leading-relaxed">
-                            Grupo de Oração Rainha da Paz - Sinop/MT. <br />
+                            Renovação Carismática Católica da Diocese de Sinop/MT. <br />
                             A serviço da Igreja, promovendo a cultura de Pentecostes.
                         </p>
                         <div className="flex gap-4">
@@ -86,11 +86,11 @@ export function Footer() {
                 </div>
 
                 <div className="mt-16 pt-8 border-t border-blue-800 text-center text-xs text-blue-200">
-                    <p>Grupo de Oração Rainha da Paz Sinop - CNPJ: 03.162.415/0001-50</p>
+                    <p>Renovação Carismática Católica da Diocese de Sinop - CNPJ: 03.162.415/0001-50</p>
                     <p className="mt-2 text-[10px] opacity-70">
                         Feito sob a luz do Espírito Santo e com Inteligência Artificial.
                     </p>
-                    <p className="mt-1 text-[10px] opacity-50">&copy; {new Date().getFullYear()} Rainha da Paz Sinop. Todos os direitos reservados.</p>
+                    <p className="mt-1 text-[10px] opacity-50">&copy; {new Date().getFullYear()} RCC Diocese de Sinop. Todos os direitos reservados.</p>
                 </div>
             </div>
         </footer>
