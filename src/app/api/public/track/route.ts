@@ -9,6 +9,10 @@ export async function POST(req: Request) {
         const { slug } = await req.json();
         if (!slug) return NextResponse.json({ error: 'Missing slug' }, { status: 400 });
 
+        if (!supabaseUrl || !supabaseServiceKey) {
+            throw new Error('Supabase environment variables are missing');
+        }
+
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
         // Incrementar visualizações usando RPC para ser atômico ou upsert manual
