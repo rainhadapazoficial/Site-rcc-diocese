@@ -119,7 +119,7 @@ export default async function StatusPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y">
-                            {tableStatus.map((table) => (
+                            {tableStatus.map((table: any) => (
                                 <tr key={table.name} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-4 font-mono text-sm">{table.name}</td>
                                     <td className="px-6 py-4">
@@ -159,7 +159,7 @@ export default async function StatusPage() {
                         </thead>
                         <tbody className="divide-y">
                             {syncLogs.length > 0 ? (
-                                syncLogs.map((log) => (
+                                syncLogs.map((log: any) => (
                                     <tr key={log.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4 text-sm text-slate-600">
                                             {new Date(log.created_at).toLocaleString('pt-BR')}

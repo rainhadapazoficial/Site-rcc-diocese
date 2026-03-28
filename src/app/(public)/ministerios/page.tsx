@@ -63,7 +63,7 @@ export default function MinisteriosPublicPage() {
         }
 
         // Fetch history for all fetched ministries
-        const ids = list.map(m => m.id);
+        const ids = list.map((m: any) => m.id);
         const { data: historyData } = await supabase
             .from("ministerio_coordinator_history")
             .select("ministerio_id, nome, gestao, ordem")
@@ -71,12 +71,12 @@ export default function MinisteriosPublicPage() {
             .order("ordem", { ascending: true });
 
         const historyByMin: Record<number, any[]> = {};
-        (historyData || []).forEach(row => {
+        (historyData || []).forEach((row: any) => {
             if (!historyByMin[row.ministerio_id]) historyByMin[row.ministerio_id] = [];
             historyByMin[row.ministerio_id].push({ nome: row.nome, gestao: row.gestao });
         });
 
-        setMinisterios(list.map(m => ({
+        setMinisterios(list.map((m: any) => ({
             ...m,
             history: historyByMin[m.id] || []
         })));

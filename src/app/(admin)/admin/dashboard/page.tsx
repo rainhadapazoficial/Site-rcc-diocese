@@ -61,7 +61,7 @@ export default function DashboardPage() {
                 supabase.from("sync_logs").select("*").order("created_at", { ascending: false }).limit(1).single()
             ]);
 
-            const totalViews = viewsData?.reduce((acc, curr) => acc + curr.views, 0) || 0;
+            const totalViews = (viewsData as any[])?.reduce((acc: number, curr: any) => acc + (curr.views || 0), 0) || 0;
 
             setStats({
                 posts: postsCount || 0,

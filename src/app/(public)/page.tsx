@@ -99,7 +99,7 @@ export default async function HomePage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
                         {latestPosts.length > 0 ? (
-                            latestPosts.map((post) => (
+                            latestPosts.map((post: any) => (
                                 <div key={post.id} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 group hover:shadow-2xl transition-all duration-500 flex flex-col">
                                     <Link href={`/blog/${post.slug || post.id}`}>
                                         <div className="h-56 bg-gray-200 relative overflow-hidden">
@@ -157,7 +157,7 @@ export default async function HomePage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
                         {latestGroups.length > 0 ? (
-                            latestGroups.map((group) => (
+                            latestGroups.map((group: any) => (
                                 <div key={group.id} className="bg-white p-8 rounded-[3rem] shadow-sm border border-gray-100 group hover:shadow-xl transition-all duration-500 hover:-translate-y-2">
                                     <div className="flex items-center gap-4 mb-8">
                                         <div className="w-16 h-16 bg-brand-blue/10 rounded-2xl flex items-center justify-center text-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-all duration-500">
@@ -216,7 +216,7 @@ export default async function HomePage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
                         {latestMinistries.length > 0 ? (
-                            latestMinistries.map((min) => (
+                            latestMinistries.map((min: any) => (
                                 <div key={min.id} className="bg-white p-10 rounded-[4rem] shadow-sm border border-gray-100/50 group hover:shadow-2xl transition-all duration-700 flex flex-col relative overflow-hidden">
                                     <div className={`absolute top-0 right-0 w-32 h-32 ${min.cor || 'bg-brand-blue/5'} opacity-10 rounded-bl-full transition-all group-hover:scale-150 group-hover:opacity-20`} />
 

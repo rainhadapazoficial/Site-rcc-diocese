@@ -66,5 +66,5 @@ export default async function CustomDynamicPage({ params }: { params: Promise<{ 
 
 export async function generateStaticParams() {
     const { data } = await supabase.from("custom_pages").select("slug");
-    return data?.map((p) => ({ slug: p.slug })) || [];
+    return data?.map((p: any) => ({ slug: p.slug })) || [];
 }
