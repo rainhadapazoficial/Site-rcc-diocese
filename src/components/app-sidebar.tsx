@@ -114,8 +114,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                 className="w-10 h-10 rounded-xl object-contain bg-white p-1 shadow-lg"
                             />
                             <div className="grid flex-1 text-left text-sm leading-tight">
-                                <span className="truncate font-bold italic text-brand-gold">RCC Diocese Sinop</span>
-                                <span className="truncate text-[10px] uppercase tracking-widest text-blue-200">Painel Admin</span>
+                                <span className="truncate text-xs font-bold uppercase tracking-widest text-blue-200">Painel Administrativo</span>
                             </div>
                         </div>
                     </SidebarMenuItem>
