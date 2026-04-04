@@ -137,9 +137,13 @@ export default function GruposClient() {
                                 <Card key={group.id} className="group overflow-hidden rounded-[3rem] border-none shadow-sm hover:shadow-2xl transition-all duration-500 bg-white flex flex-col">
                                     <CardContent className="p-8 space-y-6 flex-1 flex flex-col">
                                         <div className="flex items-center gap-4">
-                                            {group.imagem && group.imagem.length > 10 ? (
-                                                <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-sm shrink-0">
-                                                    <img src={group.imagem} alt={group.nome} className="w-full h-full object-cover" />
+                                            {(group.logo_url && group.logo_url.length > 10) || (group.imagem && group.imagem.length > 10) ? (
+                                                <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-sm shrink-0 bg-white flex items-center justify-center p-1 border border-gray-100">
+                                                    <img 
+                                                        src={group.logo_url || group.imagem} 
+                                                        alt={group.nome} 
+                                                        className="w-full h-full object-contain" 
+                                                    />
                                                 </div>
                                             ) : (
                                                 <div className="w-16 h-16 bg-brand-blue/5 rounded-2xl flex items-center justify-center group-hover:bg-brand-blue transition-colors duration-500 shrink-0">
@@ -275,14 +279,24 @@ export default function GruposClient() {
                                     </div>
                                 )}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                                <div className="absolute bottom-6 left-10 right-10">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className="text-[9px] font-bold text-brand-gold bg-brand-gold/20 px-3 py-1 rounded-full uppercase tracking-widest backdrop-blur-md border border-brand-gold/30">
-                                            {selectedGroup.cidade}
-                                        </span>
+                                    <div className="absolute bottom-[-56px] left-10 lg:left-12 z-20">
+                                        <div className="w-32 h-32 md:w-36 md:h-36 bg-white rounded-3xl shadow-2xl p-4 flex items-center justify-center border-4 border-white overflow-hidden transform hover:scale-105 transition-transform duration-500">
+                                            {selectedGroup.logo_url ? (
+                                                <img src={selectedGroup.logo_url} alt="Logo" className="max-w-full max-h-full object-contain" />
+                                            ) : (
+                                                <Users className="w-12 h-12 text-brand-blue/20" />
+                                            )}
+                                        </div>
                                     </div>
-                                    <h2 className="text-3xl md:text-4xl font-black text-white italic tracking-tight leading-tight uppercase">{selectedGroup.nome}</h2>
-                                </div>
+
+                                    <div className="absolute bottom-6 left-48 md:left-56 right-10">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-[9px] font-bold text-brand-gold bg-brand-gold/20 px-3 py-1 rounded-full uppercase tracking-widest backdrop-blur-md border border-brand-gold/30">
+                                                {selectedGroup.cidade}
+                                            </span>
+                                        </div>
+                                        <h2 className="text-2xl md:text-3xl font-black text-white italic tracking-tight leading-tight uppercase line-clamp-2 md:line-clamp-1">{selectedGroup.nome}</h2>
+                                    </div>
                             </div>
 
                             <div className="flex-1 overflow-y-auto p-10 lg:p-12 space-y-12 custom-scrollbar">
