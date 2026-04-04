@@ -337,7 +337,7 @@ export default function GruposAdminPage() {
                                                     <img src={formData.imagem} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.src = "https://placehold.co/600x400?text=Erro+Imagem")} />
                                                 </div>
                                             )}
-                                        </div>
+
 
                                         <div className="space-y-2">
                                             <Label htmlFor="descricao">Descrição do Grupo</Label>
