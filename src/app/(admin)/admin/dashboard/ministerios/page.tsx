@@ -240,7 +240,7 @@ export default function MinisteriosAdminPage() {
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <DialogHeader>
                                     <DialogTitle className="text-xl font-bold italic text-brand-blue">
-                                        {editingMinistry ? "Editar Ministério (V3 - COM UPLOAD)" : "Novo Ministério (V3 - COM UPLOAD)"}
+                                        {editingMinistry ? "Editar Ministério (V4 - UPLOAD + LINK)" : "Novo Ministério (V4 - UPLOAD + LINK)"}
                                     </DialogTitle>
                                 </DialogHeader>
 
@@ -305,18 +305,29 @@ export default function MinisteriosAdminPage() {
                                             </div>
                                         </div>
                                         
-                                        {formData.imagem_url && (
-                                            <div className="w-full h-40 rounded-2xl overflow-hidden border-2 border-white shadow-md relative">
-                                                <img src={formData.imagem_url} alt="Preview" className="w-full h-full object-cover" />
-                                                <button 
-                                                    type="button"
-                                                    onClick={() => setFormData({ ...formData, imagem_url: "" })}
-                                                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow-lg"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                        <div className="space-y-3">
+                                            {formData.imagem_url && (
+                                                <div className="w-full h-40 rounded-2xl overflow-hidden border-2 border-white shadow-md relative">
+                                                    <img src={formData.imagem_url} alt="Preview" className="w-full h-full object-cover" />
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => setFormData({ ...formData, imagem_url: "" })}
+                                                        className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow-lg"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            )}
+                                            <div className="space-y-1">
+                                                <p className="text-[9px] uppercase font-bold text-gray-400 px-1">Ou cole o link da foto</p>
+                                                <Input
+                                                    placeholder="https://exemplo.com/foto.jpg"
+                                                    value={formData.imagem_url || ""}
+                                                    onChange={(e) => setFormData({ ...formData, imagem_url: e.target.value })}
+                                                    className="rounded-xl h-10 text-xs bg-white/50"
+                                                />
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
 
                                     <div className="space-y-2">
@@ -334,7 +345,7 @@ export default function MinisteriosAdminPage() {
                                     <div className="flex items-center justify-between">
                                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
                                             <History className="w-4 h-4 text-brand-blue" />
-                                            Histórico de coordenadores (UPLOAD FOTO)
+                                            Histórico de coordenadores (UPLOAD + LINK)
                                         </label>
                                         <Button type="button" variant="outline" size="sm" onClick={addCoordinatorHistoryRow} className="rounded-xl">
                                             <Plus className="w-4 h-4 mr-1" />
@@ -393,6 +404,15 @@ export default function MinisteriosAdminPage() {
                                                                 <Button type="button" variant="ghost" size="icon" onClick={() => removeCoordinatorHistoryRow(index)} className="text-gray-300 hover:text-red-500 shrink-0">
                                                                     <Trash2 className="w-5 h-5" />
                                                                 </Button>
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <p className="text-[9px] uppercase font-bold text-gray-400 px-1 italic">Ou cole o link da foto do coordenador</p>
+                                                                <Input
+                                                                    placeholder="https://exemplo.com/foto-perfil.jpg"
+                                                                    value={row.imagem_url || ""}
+                                                                    onChange={(e) => updateCoordinatorHistoryRow(index, "imagem_url", e.target.value)}
+                                                                    className="rounded-lg h-9 text-xs bg-gray-50/50 border-dashed"
+                                                                />
                                                             </div>
                                                         </div>
                                                     </div>
