@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Newspaper, Calendar, LayoutDashboard, Mail, LogOut, Settings, Heart, Image as ImageIcon, Monitor, Crown, Users, Flame, History, Globe, GraduationCap, MapPin } from "lucide-react";
+import { Newspaper, Calendar, LayoutDashboard, Mail, LogOut, Settings, Heart, Image as ImageIcon, Monitor, Crown, Users, Flame, History, Globe, GraduationCap, MapPin, Database } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
@@ -75,6 +75,11 @@ const data = {
             title: "Gerenciar Páginas",
             url: "/admin/dashboard/paginas",
             icon: Globe,
+        },
+        {
+            title: "Editor SQL",
+            url: "/admin/dashboard/sql",
+            icon: Database,
         },
         {
             title: "Ministérios",

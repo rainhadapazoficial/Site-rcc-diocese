@@ -23,6 +23,7 @@ export default function ConselhoAdminPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [mandatos, setMandatos] = useState<any[]>([]);
     const [membros, setMembros] = useState<any[]>([]);
+    const [grupos, setGrupos] = useState<any[]>([]);
     const [selectedMandato, setSelectedMandato] = useState<string | null>(null);
 
     // Dialog States
@@ -39,8 +40,10 @@ export default function ConselhoAdminPage() {
     useEffect(() => {
         if (selectedMandato) {
             fetchMembros(selectedMandato);
+            fetchGrupos(selectedMandato);
         } else {
             setMembros([]);
+            setGrupos([]);
         }
     }, [selectedMandato]);
 
@@ -73,6 +76,18 @@ export default function ConselhoAdminPage() {
 
         if (error) console.error("Erro ao buscar membros:", error);
         else setMembros(data || []);
+    }
+
+    async function fetchGrupos(mandatoId: string) {
+        if (!mandatoId) return;
+        const { data, error } = await supabase
+            .from("groups")
+            .select("id, nome, coordenador, coordenador_foto_url")
+            .eq("mandato_id", mandatoId)
+            .order("nome", { ascending: true });
+
+        if (error) console.error("Erro ao buscar grupos do mandato:", error);
+        else setGrupos(data || []);
     }
 
     // --- MANDATO ACTIONS ---
@@ -310,6 +325,40 @@ export default function ConselhoAdminPage() {
                                         <MembroCard key={m.id} membro={m} onEdit={() => openMembroDialog(m)} onDelete={() => deleteMembro(m.id)} />
                                     ))}
                                 </div>
+                            </div>
+
+                            {/* Coordenadores de Grupos (Automático) */}
+                            <div>
+                                <div className="flex items-center justify-between mb-3 border-b pb-2">
+                                    <h3 className="text-lg font-bold text-brand-blue">Coordenadores de Grupos de Oração</h3>
+                                    <span className="text-[10px] font-bold text-brand-gold uppercase tracking-widest bg-brand-gold/5 px-2 py-1 rounded-full border border-brand-gold/20">
+                                        Automático via Módulo de Grupos
+                                    </span>
+                                </div>
+                                {grupos.length > 0 ? (
+                                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                        {grupos.map(g => (
+                                            <Card key={g.id} className="rounded-2xl overflow-hidden bg-brand-blue/[0.02] border-brand-blue/10">
+                                                <div className="flex items-center p-3 gap-4">
+                                                    <img
+                                                        src={g.coordenador_foto_url || "https://ui-avatars.com/api/?name=" + (g.coordenador || "C")}
+                                                        alt={g.coordenador}
+                                                        className="w-16 h-16 rounded-full object-cover bg-gray-100 shadow-sm border-2 border-white"
+                                                    />
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="font-bold text-gray-900 truncate">{g.coordenador || "Não Informado"}</h4>
+                                                        <p className="text-[10px] text-brand-gold font-black uppercase truncate tracking-widest">{g.nome}</p>
+                                                    </div>
+                                                </div>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="p-10 text-center border-2 border-dashed rounded-2xl text-gray-400">
+                                        <p className="text-sm">Nenhum grupo de oração vinculado a este biênio.</p>
+                                        <p className="text-[10px] uppercase mt-1">Vá em &quot;Grupos de Oração&quot; para vincular grupos a este mandato.</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
