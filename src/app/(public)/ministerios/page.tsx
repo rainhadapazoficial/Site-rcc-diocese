@@ -141,9 +141,15 @@ export default function MinisteriosPublicPage() {
 
                                         <div className="space-y-4 pt-4 mt-auto border-t border-gray-50">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-brand-blue/5 flex items-center justify-center text-brand-blue">
-                                                    <Users className="w-5 h-5" />
-                                                </div>
+                                                {min.imagem_url ? (
+                                                    <div className="w-12 h-12 rounded-2xl overflow-hidden border-2 border-brand-blue/5 shadow-sm">
+                                                        <img src={min.imagem_url} alt={min.coordenador} className="w-full h-full object-cover" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-12 h-12 rounded-2xl bg-brand-blue/5 flex items-center justify-center text-brand-blue shadow-sm">
+                                                        <Users className="w-5 h-5" />
+                                                    </div>
+                                                )}
                                                 <div>
                                                     <p className="text-[10px] uppercase font-bold text-gray-400">Coordenador atual</p>
                                                     <p className="font-bold text-brand-blue">{min.coordenador || "A definir"}</p>
@@ -221,9 +227,15 @@ export default function MinisteriosPublicPage() {
                                         <div className="space-y-6">
                                             <div className="bg-gray-50 p-6 rounded-[2rem] space-y-4 border border-gray-100 flex flex-col">
                                                 <div className="flex items-start gap-4">
-                                                    <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-brand-blue shrink-0">
-                                                        <Users className="w-6 h-6" />
-                                                    </div>
+                                                    {selectedMinistry.imagem_url ? (
+                                                        <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white shadow-lg">
+                                                            <img src={selectedMinistry.imagem_url} alt={selectedMinistry.coordenador} className="w-full h-full object-cover" />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-brand-blue shrink-0">
+                                                            <Users className="w-6 h-6" />
+                                                        </div>
+                                                    )}
                                                     <div>
                                                         <p className="text-[10px] uppercase font-bold text-gray-400">Coordenação Atual</p>
                                                         <p className="font-bold text-brand-blue text-xl">{selectedMinistry.coordenador || "A definir"}</p>
