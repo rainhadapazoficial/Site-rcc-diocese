@@ -5,15 +5,16 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Plus, Search, Trash2, Edit, Loader2,
     CheckCircle2, XCircle, Users, History,
-    MapPin, Calendar, Clock, Phone, Globe, Facebook, Instagram
+    MapPin, Calendar, Clock, Phone, Globe,
+    Facebook, Instagram, Image as ImageIcon
 } from "lucide-react";
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle,
-    DialogTrigger, DialogFooter,
+    DialogTrigger, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -36,9 +37,39 @@ export default function GruposAdminPage() {
     const [pageSettings, setPageSettings] = useState<any>({
         title: "Grupos de Oração",
         subtitle: "Encontre um Grupo de Oração da Renovação Carismática Católica mais próximo de você e venha vivenciar Pentecostes!",
-        image_url: "https://images.unsplash.com/photo-1544427920-c49ccfb85579?q=80&w=2000&auto=format&fit=crop"
     });
     const [isSavingSettings, setIsSavingSettings] = useState(false);
+    const [uploadingField, setUploadingField] = useState<string | null>(null);
+
+    async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>, fieldName: string, subfolder: string, callback: (url: string) => void) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setUploadingField(fieldName);
+        try {
+            const publicUrl = await uploadImage(file, subfolder);
+            callback(publicUrl);
+        } catch (error: any) {
+            alert("Erro ao fazer upload: " + error.message);
+        } finally {
+            setUploadingField(null);
+        }
+    }
+
+    async function uploadImage(file: File, subfolder: string) {
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+        const filePath = `${subfolder}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from("media")
+            .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage.from("media").getPublicUrl(filePath);
+        return data.publicUrl;
+    }
 
     useEffect(() => {
         fetchGroups();
@@ -273,14 +304,34 @@ export default function GruposAdminPage() {
 
                                 <ScrollArea className="flex-1 overflow-y-auto p-8">
                                     <div className="space-y-6">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="imagem">URL da Imagem (Opcional)</Label>
-                                            <Input
-                                                id="imagem"
-                                                placeholder="https://exemplo.com/foto.jpg"
-                                                value={formData.imagem || ""}
-                                                onChange={(e) => setFormData({ ...formData, imagem: e.target.value })}
-                                            />
+                                            <Label htmlFor="imagem" className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">URL da Imagem do Grupo (Opcional)</Label>
+                                            <div className="flex gap-2">
+                                                <Input
+                                                    id="imagem"
+                                                    placeholder="https://exemplo.com/foto.jpg"
+                                                    value={formData.imagem || ""}
+                                                    onChange={(e) => setFormData({ ...formData, imagem: e.target.value })}
+                                                    className="rounded-xl"
+                                                />
+                                                <div className="relative">
+                                                    <input
+                                                        type="file"
+                                                        id="upload-group-img"
+                                                        className="hidden"
+                                                        accept="image/*"
+                                                        onChange={(e) => handleFileChange(e, 'group-img', 'grupos', (url) => setFormData({ ...formData, imagem: url }))}
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        onClick={() => document.getElementById('upload-group-img')?.click()}
+                                                        disabled={uploadingField === 'group-img'}
+                                                        className="rounded-xl border-brand-blue text-brand-blue hover:bg-brand-blue/10 h-10 px-3"
+                                                    >
+                                                        {uploadingField === 'group-img' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                                                    </Button>
+                                                </div>
+                                            </div>
                                             {formData.imagem && (
                                                 <div className="mt-2 relative h-32 w-full rounded-md overflow-hidden bg-slate-100 border">
                                                     <img src={formData.imagem} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.src = "https://placehold.co/600x400?text=Erro+Imagem")} />
@@ -333,12 +384,32 @@ export default function GruposAdminPage() {
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Foto do Coordenador (URL)</label>
-                                                <Input
-                                                    value={formData.coordenador_foto_url || ""}
-                                                    onChange={(e) => setFormData({ ...formData, coordenador_foto_url: e.target.value })}
-                                                    placeholder="https://..."
-                                                    className="rounded-xl"
-                                                />
+                                                <div className="flex gap-2">
+                                                    <Input
+                                                        value={formData.coordenador_foto_url || ""}
+                                                        onChange={(e) => setFormData({ ...formData, coordenador_foto_url: e.target.value })}
+                                                        placeholder="https://..."
+                                                        className="rounded-xl"
+                                                    />
+                                                    <div className="relative">
+                                                        <input
+                                                            type="file"
+                                                            id="upload-coord-photo"
+                                                            className="hidden"
+                                                            accept="image/*"
+                                                            onChange={(e) => handleFileChange(e, 'coord-photo', 'coordenadores', (url) => setFormData({ ...formData, coordenador_foto_url: url }))}
+                                                        />
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            onClick={() => document.getElementById('upload-coord-photo')?.click()}
+                                                            disabled={uploadingField === 'coord-photo'}
+                                                            className="rounded-xl border-brand-blue text-brand-blue hover:bg-brand-blue/10 h-10 px-3"
+                                                        >
+                                                            {uploadingField === 'coord-photo' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                                                        </Button>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div className="space-y-2 col-span-2">
                                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Biênio / Mandato Atual</label>
@@ -473,12 +544,32 @@ export default function GruposAdminPage() {
 
                                                             <div className="space-y-2">
                                                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">URL da Foto do Coordenador</label>
-                                                                <Input
-                                                                    placeholder="https://exemplo.com/foto.jpg"
-                                                                    value={row.foto_url}
-                                                                    onChange={(e) => updateCoordinatorHistoryRow(index, "foto_url", e.target.value)}
-                                                                    className="rounded-xl h-11"
-                                                                />
+                                                                <div className="flex gap-2">
+                                                                    <Input
+                                                                        placeholder="https://exemplo.com/foto.jpg"
+                                                                        value={row.foto_url}
+                                                                        onChange={(e) => updateCoordinatorHistoryRow(index, "foto_url", e.target.value)}
+                                                                        className="rounded-xl h-11"
+                                                                    />
+                                                                    <div className="relative">
+                                                                        <input
+                                                                            type="file"
+                                                                            id={`upload-history-${index}`}
+                                                                            className="hidden"
+                                                                            accept="image/*"
+                                                                            onChange={(e) => handleFileChange(e, `history-${index}`, 'coordenadores', (url) => updateCoordinatorHistoryRow(index, "foto_url", url))}
+                                                                        />
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="outline"
+                                                                            onClick={() => document.getElementById(`upload-history-${index}`)?.click()}
+                                                                            disabled={uploadingField === `history-${index}`}
+                                                                            className="rounded-xl border-brand-blue text-brand-blue hover:bg-brand-blue/10 h-11 px-3"
+                                                                        >
+                                                                            {uploadingField === `history-${index}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                                                                        </Button>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     ))}
@@ -501,30 +592,63 @@ export default function GruposAdminPage() {
 
             {/* Page Settings Section */}
             <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
+                <CardHeader className="bg-gray-50/50 p-8 border-b border-gray-100 flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle className="text-xl font-bold italic text-brand-blue flex items-center gap-2">
+                            <Globe className="w-5 h-5 text-brand-gold" />
+                            Configurações da Página Pública
+                        </CardTitle>
+                        <CardDescription>Configure como a página de grupos aparece para os visitantes.</CardDescription>
+                    </div>
+                </CardHeader>
                 <CardContent className="p-8">
-                    <form onSubmit={handleSaveSettings} className="space-y-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-bold italic text-brand-blue flex items-center gap-2">
-                                <Globe className="w-5 h-5 text-brand-gold" />
-                                Configurações da Página Pública
-                            </h2>
-                            <Button type="submit" disabled={isSavingSettings} className="bg-brand-gold hover:bg-brand-gold/90 text-brand-blue font-bold rounded-xl h-10 px-6">
-                                {isSavingSettings ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar Alterações"}
-                            </Button>
+                    <form onSubmit={handleSaveSettings} className="grid md:grid-cols-2 gap-8 items-end">
+                        <div className="space-y-2">
+                            <Label htmlFor="title" className="text-gray-500 font-bold uppercase text-[10px] tracking-widest px-1">Título da Página</Label>
+                            <Input id="title" name="title" defaultValue={pageSettings.title} className="rounded-xl border-gray-100 bg-gray-50/50" />
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Título da Página</label>
-                                <Input name="title" defaultValue={pageSettings.title} placeholder="Ex: Grupos de Oração" required className="rounded-xl border-gray-100" />
+                        <div className="space-y-2">
+                            <Label htmlFor="image_url" className="text-gray-500 font-bold uppercase text-[10px] tracking-widest px-1">Imagem de Fundo (URL)</Label>
+                            <div className="flex gap-2">
+                                <Input
+                                    id="image_url"
+                                    name="image_url"
+                                    value={pageSettings.image_url}
+                                    onChange={(e) => setPageSettings({ ...pageSettings, image_url: e.target.value })}
+                                    className="rounded-xl border-gray-100 bg-gray-50/50"
+                                />
+                                <div className="relative">
+                                    <input
+                                        type="file"
+                                        id="upload-page-bg"
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={(e) => handleFileChange(e, 'page-bg', 'paginas', (url) => setPageSettings({ ...pageSettings, image_url: url }))}
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => document.getElementById('upload-page-bg')?.click()}
+                                        disabled={uploadingField === 'page-bg'}
+                                        className="rounded-xl border-brand-blue text-brand-blue hover:bg-brand-blue/10 h-10 px-3"
+                                    >
+                                        {uploadingField === 'page-bg' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                                    </Button>
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Imagem de Fundo (URL)</label>
-                                <Input name="image_url" defaultValue={pageSettings.image_url} placeholder="https://..." required className="rounded-xl border-gray-100" />
-                            </div>
-                            <div className="space-y-2 md:col-span-2">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Subtítulo / Descrição</label>
-                                <Input name="subtitle" defaultValue={pageSettings.subtitle} placeholder="Uma breve descrição..." required className="rounded-xl border-gray-100" />
-                            </div>
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                            <Label htmlFor="subtitle" className="text-gray-500 font-bold uppercase text-[10px] tracking-widest px-1">Subtítulo / Descrição</Label>
+                            <Input id="subtitle" name="subtitle" defaultValue={pageSettings.subtitle} className="rounded-xl border-gray-100 bg-gray-50/50 h-12" />
+                        </div>
+                        <div className="md:col-span-2 flex justify-end pt-4">
+                            <Button type="submit" disabled={isSavingSettings} className="bg-brand-gold hover:bg-brand-gold/90 text-brand-blue font-bold rounded-xl h-12 px-8 shadow-sm">
+                                {isSavingSettings ? (
+                                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</>
+                                ) : (
+                                    <><CheckCircle2 className="w-4 h-4 mr-2" /> Salvar Alterações</>
+                                )}
+                            </Button>
                         </div>
                     </form>
                 </CardContent>
