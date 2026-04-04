@@ -30,11 +30,6 @@ const data = {
             icon: Newspaper,
         },
         {
-            title: "Notícias",
-            url: "/admin/dashboard/noticias",
-            icon: Newspaper,
-        },
-        {
             title: "Banner Início",
             url: "/admin/dashboard/banners",
             icon: Monitor,

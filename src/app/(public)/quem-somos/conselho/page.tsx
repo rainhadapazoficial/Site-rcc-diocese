@@ -13,6 +13,7 @@ export default function ConselhoPublicPage() {
     const [mandatos, setMandatos] = useState<any[]>([]);
     const [selectedMandatoId, setSelectedMandatoId] = useState<string | null>(null);
     const [membros, setMembros] = useState<any[]>([]);
+    const [grupos, setGrupos] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -22,6 +23,7 @@ export default function ConselhoPublicPage() {
     useEffect(() => {
         if (selectedMandatoId) {
             fetchMembros(selectedMandatoId);
+            fetchGrupos(selectedMandatoId);
         }
     }, [selectedMandatoId]);
 
@@ -51,6 +53,16 @@ export default function ConselhoPublicPage() {
             .order("ordem", { ascending: true });
 
         setMembros(data || []);
+    }
+
+    async function fetchGrupos(mandatoId: string) {
+        const { data } = await supabase
+            .from("groups")
+            .select("id, nome, coordenador, coordenador_foto_url")
+            .eq("mandato_id", mandatoId)
+            .order("nome", { ascending: true });
+
+        setGrupos(data || []);
     }
 
     const currentMandato = mandatos.find(m => String(m.id) === selectedMandatoId);
@@ -145,6 +157,45 @@ export default function ConselhoPublicPage() {
                                 </div>
                             ) : (
                                 <p className="text-center text-gray-400 italic">Nenhum conselheiro fiscal cadastrado.</p>
+                            )}
+                        </div>
+
+                        {/* Coordenadores de Grupos */}
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+                            <h2 className="text-3xl font-bold text-brand-blue text-center mb-10 flex items-center justify-center gap-3">
+                                <span className="w-8 h-1 bg-brand-gold rounded-full"></span>
+                                Coordenadores de Grupos de Oração
+                                <span className="w-8 h-1 bg-brand-gold rounded-full"></span>
+                            </h2>
+                            {grupos.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-center">
+                                    {grupos.map((g) => (
+                                        <div key={g.id} className="group bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center">
+                                            <div className="relative mb-6">
+                                                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-300">
+                                                    <img
+                                                        src={g.coordenador_foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(g.coordenador || "C")}&background=1e3a5f&color=fff`}
+                                                        alt={g.coordenador}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
+                                                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-brand-blue text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm whitespace-nowrap">
+                                                    Coordenador(a)
+                                                </div>
+                                            </div>
+                                            <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-brand-blue transition-colors">
+                                                {g.coordenador || "Não informado"}
+                                            </h3>
+                                            <p className="text-brand-gold font-bold uppercase text-xs tracking-widest">
+                                                {g.nome}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-center text-gray-400 italic py-10">
+                                    Nenhum coordenador de grupo vinculado a este mandato.
+                                </p>
                             )}
                         </div>
                     </>

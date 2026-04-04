@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -134,6 +134,8 @@ export interface Database {
           group_id: number
           nome: string
           gestao: string
+          foto_url: string | null
+          mandato_id: number | null
           ordem: number
           created_at: string
         }
@@ -142,6 +144,8 @@ export interface Database {
           group_id: number
           nome: string
           gestao: string
+          foto_url?: string | null
+          mandato_id?: number | null
           ordem?: number
           created_at?: string
         }
@@ -150,6 +154,8 @@ export interface Database {
           group_id?: number
           nome?: string
           gestao?: string
+          foto_url?: string | null
+          mandato_id?: number | null
           ordem?: number
           created_at?: string
         }
@@ -163,6 +169,8 @@ export interface Database {
           cidade: string
           geolocalizacao: string | null
           coordenador: string | null
+          coordenador_foto_url: string | null
+          mandato_id: number | null
           whatsapp: string | null
           site: string | null
           facebook: string | null
@@ -180,6 +188,8 @@ export interface Database {
           cidade: string
           geolocalizacao?: string | null
           coordenador?: string | null
+          coordenador_foto_url?: string | null
+          mandato_id?: number | null
           whatsapp?: string | null
           site?: string | null
           facebook?: string | null
@@ -197,6 +207,8 @@ export interface Database {
           cidade?: string
           geolocalizacao?: string | null
           coordenador?: string | null
+          coordenador_foto_url?: string | null
+          mandato_id?: number | null
           whatsapp?: string | null
           site?: string | null
           facebook?: string | null

@@ -16,6 +16,9 @@ import {
     DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 export default function GruposAdminPage() {
     const [groups, setGroups] = useState<any[]>([]);
@@ -25,7 +28,8 @@ export default function GruposAdminPage() {
     const [editingGroup, setEditingGroup] = useState<any>(null);
     const [formData, setFormData] = useState<any>({});
     const [searchTerm, setSearchTerm] = useState("");
-    const [coordinatorHistory, setCoordinatorHistory] = useState<{ nome: string; gestao: string }[]>([]);
+    const [mandatos, setMandatos] = useState<any[]>([]);
+    const [coordinatorHistory, setCoordinatorHistory] = useState<{ nome: string; gestao: string; foto_url?: string; mandato_id?: string }[]>([]);
 
     // Page Settings State
     const [pageSettings, setPageSettings] = useState<any>({
@@ -38,7 +42,16 @@ export default function GruposAdminPage() {
     useEffect(() => {
         fetchGroups();
         fetchPageSettings();
+        fetchMandatos();
     }, []);
+
+    async function fetchMandatos() {
+        const { data, error } = await supabase
+            .from("conselho_mandatos")
+            .select("*")
+            .order("ano_inicio", { ascending: false });
+        if (data) setMandatos(data);
+    }
 
     async function fetchPageSettings() {
         const { data, error } = await supabase
@@ -87,21 +100,26 @@ export default function GruposAdminPage() {
     async function fetchCoordinatorHistory(groupId: number) {
         const { data, error } = await supabase
             .from("group_coordinator_history")
-            .select("id, nome, gestao, ordem")
+            .select("id, nome, gestao, foto_url, mandato_id, ordem")
             .eq("group_id", groupId)
             .order("ordem", { ascending: true });
         if (error) {
             console.error("Error fetching coordinator history:", error);
             return [];
         }
-        return (data || []).map((r: { nome: string; gestao: string }) => ({ nome: r.nome, gestao: r.gestao }));
+        return (data || []).map((r: any) => ({
+            nome: r.nome,
+            gestao: r.gestao,
+            foto_url: r.foto_url || "",
+            mandato_id: r.mandato_id ? String(r.mandato_id) : ""
+        }));
     }
 
     function addCoordinatorHistoryRow() {
-        setCoordinatorHistory((prev) => [...prev, { nome: "", gestao: "" }]);
+        setCoordinatorHistory((prev) => [...prev, { nome: "", gestao: "", foto_url: "", mandato_id: "" }]);
     }
 
-    function updateCoordinatorHistoryRow(index: number, field: "nome" | "gestao", value: string) {
+    function updateCoordinatorHistoryRow(index: number, field: string, value: string) {
         setCoordinatorHistory((prev) => {
             const next = [...prev];
             next[index] = { ...next[index], [field]: value };
@@ -131,6 +149,8 @@ export default function GruposAdminPage() {
             instagram: formValues.get("instagram"),
             descricao: formData.descricao,
             imagem: formData.imagem,
+            coordenador_foto_url: formData.coordenador_foto_url,
+            mandato_id: formData.mandato_id ? parseInt(formData.mandato_id) : null,
             slug: (formValues.get("nome") as string).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ /g, "-").replace(/[^\w-]+/g, ""),
         };
 
@@ -157,10 +177,12 @@ export default function GruposAdminPage() {
         const validHistory = coordinatorHistory.filter((h) => h.nome.trim() || h.gestao.trim());
         if (validHistory.length > 0) {
             await supabase.from("group_coordinator_history").insert(
-                validHistory.map((h: { nome: string; gestao: string }, i: number) => ({
+                validHistory.map((h: any, i: number) => ({
                     group_id: groupId,
                     nome: h.nome.trim() || "(nome não informado)",
                     gestao: h.gestao.trim() || "(gestão não informada)",
+                    foto_url: h.foto_url || null,
+                    mandato_id: h.mandato_id ? parseInt(h.mandato_id) : null,
                     ordem: i,
                 }))
             );
@@ -295,8 +317,35 @@ export default function GruposAdminPage() {
                                                 <Input name="geolocalizacao" defaultValue={editingGroup?.geolocalizacao} placeholder="Link do Google Maps" className="rounded-xl" />
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Coordenador</label>
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Coordenador Atual</label>
                                                 <Input name="coordenador" defaultValue={editingGroup?.coordenador} placeholder="Nome do coord." className="rounded-xl" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Foto do Coordenador (URL)</label>
+                                                <Input
+                                                    value={formData.coordenador_foto_url || ""}
+                                                    onChange={(e) => setFormData({ ...formData, coordenador_foto_url: e.target.value })}
+                                                    placeholder="https://..."
+                                                    className="rounded-xl"
+                                                />
+                                            </div>
+                                            <div className="space-y-2 col-span-2">
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Biênio / Mandato Atual</label>
+                                                <Select
+                                                    value={formData.mandato_id ? String(formData.mandato_id) : ""}
+                                                    onValueChange={(v) => setFormData({ ...formData, mandato_id: v })}
+                                                >
+                                                    <SelectTrigger className="rounded-xl">
+                                                        <SelectValue placeholder="Selecione o biênio..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {mandatos.map((m) => (
+                                                            <SelectItem key={m.id} value={String(m.id)}>
+                                                                {m.titulo} {m.ativo ? "(Atual)" : ""}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">WhatsApp Link</label>
@@ -343,21 +392,46 @@ export default function GruposAdminPage() {
                                                 <div className="space-y-2">
                                                     {coordinatorHistory.map((row, index) => (
                                                         <div key={index} className="flex gap-2 items-center rounded-xl border bg-gray-50/50 p-2">
-                                                            <Input
-                                                                placeholder="Nome do coordenador"
-                                                                value={row.nome}
-                                                                onChange={(e) => updateCoordinatorHistoryRow(index, "nome", e.target.value)}
-                                                                className="rounded-lg flex-1"
-                                                            />
-                                                            <Input
-                                                                placeholder="Gestão (ex: 2020-2022)"
-                                                                value={row.gestao}
-                                                                onChange={(e) => updateCoordinatorHistoryRow(index, "gestao", e.target.value)}
-                                                                className="rounded-lg w-36"
-                                                            />
-                                                            <Button type="button" variant="ghost" size="icon" onClick={() => removeCoordinatorHistoryRow(index)} className="text-gray-400 hover:text-red-500 shrink-0">
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </Button>
+                                                                <div className="flex flex-col flex-1 gap-2">
+                                                                    <Input
+                                                                        placeholder="Nome do coordenador"
+                                                                        value={row.nome}
+                                                                        onChange={(e) => updateCoordinatorHistoryRow(index, "nome", e.target.value)}
+                                                                        className="rounded-lg w-full"
+                                                                    />
+                                                                    <div className="flex gap-2">
+                                                                        <Input
+                                                                            placeholder="URL da Foto"
+                                                                            value={row.foto_url}
+                                                                            onChange={(e) => updateCoordinatorHistoryRow(index, "foto_url", e.target.value)}
+                                                                            className="rounded-lg flex-1"
+                                                                        />
+                                                                        <Select
+                                                                            value={row.mandato_id || ""}
+                                                                            onValueChange={(v) => updateCoordinatorHistoryRow(index, "mandato_id", v)}
+                                                                        >
+                                                                            <SelectTrigger className="rounded-lg w-40 h-10 border-gray-200">
+                                                                                <SelectValue placeholder="Biênio" />
+                                                                            </SelectTrigger>
+                                                                            <SelectContent>
+                                                                                {mandatos.map((m) => (
+                                                                                    <SelectItem key={m.id} value={String(m.id)}>
+                                                                                        {m.titulo}
+                                                                                    </SelectItem>
+                                                                                ))}
+                                                                            </SelectContent>
+                                                                        </Select>
+                                                                    </div>
+                                                                </div>
+                                                                <Input
+                                                                    placeholder="Gestão"
+                                                                    value={row.gestao}
+                                                                    onChange={(e) => updateCoordinatorHistoryRow(index, "gestao", e.target.value)}
+                                                                    className="rounded-lg w-32"
+                                                                />
+                                                                <Button type="button" variant="ghost" size="icon" onClick={() => removeCoordinatorHistoryRow(index)} className="text-gray-400 hover:text-red-500 shrink-0">
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </Button>
                                                         </div>
                                                     ))}
                                                 </div>

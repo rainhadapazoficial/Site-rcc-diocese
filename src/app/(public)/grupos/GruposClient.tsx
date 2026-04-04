@@ -63,14 +63,19 @@ export default function GruposClient() {
         const ids = groupsList.map((g: { id: number }) => g.id);
         const { data: historyData } = await supabase
             .from("group_coordinator_history")
-            .select("group_id, nome, gestao, ordem")
+            .select("group_id, nome, gestao, foto_url, mandato_id, ordem")
             .in("group_id", ids)
             .order("ordem", { ascending: true });
 
-        const historyByGroup: Record<number, { nome: string; gestao: string }[]> = {};
-        (historyData || []).forEach((row: { group_id: number; nome: string; gestao: string }) => {
+        const historyByGroup: Record<number, any[]> = {};
+        (historyData || []).forEach((row: any) => {
             if (!historyByGroup[row.group_id]) historyByGroup[row.group_id] = [];
-            historyByGroup[row.group_id].push({ nome: row.nome, gestao: row.gestao });
+            historyByGroup[row.group_id].push({
+                nome: row.nome,
+                gestao: row.gestao,
+                foto_url: row.foto_url,
+                mandato_id: row.mandato_id
+            });
         });
 
         setGroups(groupsList.map((g: any) => ({ ...g, coordinatorHistory: historyByGroup[g.id] || [] })));
@@ -172,10 +177,16 @@ export default function GruposClient() {
                                             </div>
                                             {group.coordenador && (
                                                 <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl">
-                                                    <Users className="w-5 h-5 text-brand-blue shrink-0 mt-0.5" />
-                                                    <div>
+                                                    <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-brand-blue/10">
+                                                        <img
+                                                            src={group.coordenador_foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(group.coordenador)}&background=1e3a5f&color=fff`}
+                                                            alt={group.coordenador}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    </div>
+                                                    <div className="min-w-0">
                                                         <p className="text-[10px] uppercase font-bold text-gray-400">Coordenação atual</p>
-                                                        <p className="font-medium">{group.coordenador}</p>
+                                                        <p className="font-medium truncate">{group.coordenador}</p>
                                                     </div>
                                                 </div>
                                             )}
@@ -323,11 +334,17 @@ export default function GruposClient() {
                                                     <p className="font-bold text-brand-blue">{selectedGroup.local}</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-start gap-4">
-                                                <Users className="w-6 h-6 text-brand-blue shrink-0 mt-0.5" />
+                                            <div className="flex items-center gap-4 bg-brand-blue/5 p-4 rounded-3xl border border-brand-blue/10">
+                                                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-md shrink-0">
+                                                    <img
+                                                        src={selectedGroup.coordenador_foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedGroup.coordenador || "C")}&background=1e3a5f&color=fff`}
+                                                        alt={selectedGroup.coordenador}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
                                                 <div>
-                                                    <p className="text-[10px] uppercase font-bold text-gray-400">Coordenador</p>
-                                                    <p className="font-bold text-brand-blue">{selectedGroup.coordenador || "A definir"}</p>
+                                                    <p className="text-[10px] uppercase font-bold text-gray-400">Coordenador(a) Atual</p>
+                                                    <p className="font-bold text-brand-blue text-xl">{selectedGroup.coordenador || "A definir"}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -349,11 +366,20 @@ export default function GruposClient() {
                                             <History className="w-4 h-4 text-brand-blue" />
                                             Histórico de Coordenação
                                         </h4>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             {selectedGroup.coordinatorHistory.map((h: any, i: number) => (
-                                                <div key={i} className="flex flex-col p-4 bg-gray-50/50 rounded-2xl border border-gray-100">
-                                                    <p className="font-bold text-brand-blue">{h.nome}</p>
-                                                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">{h.gestao}</p>
+                                                <div key={i} className="flex items-center gap-3 p-3 bg-gray-50/80 rounded-2xl border border-gray-100 hover:bg-white hover:shadow-md transition-all group/hist">
+                                                    <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-gray-200 group-hover/hist:border-brand-gold transition-colors">
+                                                        <img
+                                                            src={h.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(h.nome)}&background=f1f5f9&color=64748b`}
+                                                            alt={h.nome}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="font-bold text-brand-blue truncate">{h.nome}</p>
+                                                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{h.gestao}</p>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
