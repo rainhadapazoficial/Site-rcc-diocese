@@ -19,6 +19,7 @@ export default function GruposClient() {
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedGroup, setSelectedGroup] = useState<any>(null);
+    const [expandedForanias, setExpandedForanias] = useState<Set<string>>(new Set());
     const [pageSettings, setPageSettings] = useState<any>({
         title: "Grupos de Oração",
         subtitle: "Encontre um Grupo de Oração da Renovação Carismática Católica mais próximo de você e venha vivenciar Pentecostes!",
@@ -78,7 +79,8 @@ export default function GruposClient() {
             });
         });
 
-        setGroups(groupsList.map((g: any) => ({ ...g, coordinatorHistory: historyByGroup[g.id] || [] })));
+        const shuffled = shuffleArray([...groupsList]);
+        setGroups(shuffled.map((g: any) => ({ ...g, coordinatorHistory: historyByGroup[g.id] || [] })));
         setIsLoading(false);
     }
 
@@ -170,8 +172,10 @@ export default function GruposClient() {
                                         </span>
                                     </div>
                                     
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                        {groupsByForania[foraniaName].map((group) => (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                        {groupsByForania[foraniaName]
+                                            .slice(0, expandedForanias.has(foraniaName) ? undefined : 4)
+                                            .map((group) => (
                                             <Card key={group.id} className="group overflow-hidden rounded-[3rem] border-none shadow-sm hover:shadow-2xl transition-all duration-500 bg-white flex flex-col">
                                                 {/* Reutilizando CardContent original */}
                                                 <CardContent className="p-8 space-y-6 flex-1 flex flex-col">
@@ -295,6 +299,24 @@ export default function GruposClient() {
                                             </Card>
                                         ))}
                                     </div>
+
+                                    {groupsByForania[foraniaName].length > 4 && (
+                                        <div className="flex justify-center pt-8">
+                                            <Button
+                                                onClick={() => {
+                                                    const next = new Set(expandedForanias);
+                                                    const foraniaKey = foraniaName;
+                                                    if (next.has(foraniaKey)) next.delete(foraniaKey);
+                                                    else next.add(foraniaKey);
+                                                    setExpandedForanias(next);
+                                                }}
+                                                variant="outline"
+                                                className="h-12 px-10 rounded-2xl border-brand-blue/10 text-brand-blue font-bold hover:bg-brand-blue hover:text-white transition-all transform hover:scale-105 shadow-sm"
+                                            >
+                                                {expandedForanias.has(foraniaName) ? "Ver Menos Grupos" : "Ver Todos os Grupos"}
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             ));
                         })()}
@@ -459,4 +481,12 @@ export default function GruposClient() {
             </Dialog>
         </div>
     );
+}
+
+function shuffleArray(array: any[]) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
 }
