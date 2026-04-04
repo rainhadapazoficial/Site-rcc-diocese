@@ -389,49 +389,68 @@ export default function GruposAdminPage() {
                                             {coordinatorHistory.length === 0 ? (
                                                 <p className="text-sm text-gray-400 italic py-2">Nenhum registro. Clique em &quot;Adicionar gestão&quot; para incluir.</p>
                                             ) : (
-                                                <div className="space-y-2">
+                                                <div className="space-y-4">
                                                     {coordinatorHistory.map((row, index) => (
-                                                        <div key={index} className="flex gap-2 items-center rounded-xl border bg-gray-50/50 p-2">
-                                                                <div className="flex flex-col flex-1 gap-2">
-                                                                    <Input
-                                                                        placeholder="Nome do coordenador"
-                                                                        value={row.nome}
-                                                                        onChange={(e) => updateCoordinatorHistoryRow(index, "nome", e.target.value)}
-                                                                        className="rounded-lg w-full"
-                                                                    />
-                                                                    <div className="flex gap-2">
-                                                                        <Input
-                                                                            placeholder="URL da Foto"
-                                                                            value={row.foto_url}
-                                                                            onChange={(e) => updateCoordinatorHistoryRow(index, "foto_url", e.target.value)}
-                                                                            className="rounded-lg flex-1"
-                                                                        />
-                                                                        <Select
-                                                                            value={row.mandato_id || ""}
-                                                                            onValueChange={(v) => updateCoordinatorHistoryRow(index, "mandato_id", v)}
-                                                                        >
-                                                                            <SelectTrigger className="rounded-lg w-40 h-10 border-gray-200">
-                                                                                <SelectValue placeholder="Biênio" />
-                                                                            </SelectTrigger>
-                                                                            <SelectContent>
-                                                                                {mandatos.map((m) => (
-                                                                                    <SelectItem key={m.id} value={String(m.id)}>
-                                                                                        {m.titulo}
-                                                                                    </SelectItem>
-                                                                                ))}
-                                                                            </SelectContent>
-                                                                        </Select>
-                                                                    </div>
-                                                                </div>
+                                                        <div key={index} className="relative space-y-4 rounded-[1.5rem] border bg-gray-50/50 p-6 pt-10">
+                                                            <Button 
+                                                                type="button" 
+                                                                variant="ghost" 
+                                                                size="icon" 
+                                                                onClick={() => removeCoordinatorHistoryRow(index)} 
+                                                                className="absolute top-3 right-3 text-gray-400 hover:text-red-500 rounded-full h-8 w-8"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </Button>
+
+                                                            <div className="space-y-2">
+                                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Nome do Coordenador</label>
                                                                 <Input
-                                                                    placeholder="Gestão"
-                                                                    value={row.gestao}
-                                                                    onChange={(e) => updateCoordinatorHistoryRow(index, "gestao", e.target.value)}
-                                                                    className="rounded-lg w-32"
+                                                                    placeholder="Ex: João da Silva"
+                                                                    value={row.nome}
+                                                                    onChange={(e) => updateCoordinatorHistoryRow(index, "nome", e.target.value)}
+                                                                    className="rounded-xl h-11"
                                                                 />
-                                                                <Button type="button" variant="ghost" size="icon" onClick={() => removeCoordinatorHistoryRow(index)} className="text-gray-400 hover:text-red-500 shrink-0">
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                </Button>
+                                                            </div>
+
+                                                            <div className="grid grid-cols-2 gap-4">
+                                                                <div className="space-y-2">
+                                                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Anos da Gestão</label>
+                                                                    <Input
+                                                                        placeholder="Ex: 2022-2024"
+                                                                        value={row.gestao}
+                                                                        onChange={(e) => updateCoordinatorHistoryRow(index, "gestao", e.target.value)}
+                                                                        className="rounded-xl h-11"
+                                                                    />
+                                                                </div>
+                                                                <div className="space-y-2">
+                                                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Biênio Vinculado</label>
+                                                                    <Select
+                                                                        value={row.mandato_id || ""}
+                                                                        onValueChange={(v) => updateCoordinatorHistoryRow(index, "mandato_id", v)}
+                                                                    >
+                                                                        <SelectTrigger className="rounded-xl h-11 border-gray-200">
+                                                                            <SelectValue placeholder="Selecione..." />
+                                                                        </SelectTrigger>
+                                                                        <SelectContent>
+                                                                            {mandatos.map((m) => (
+                                                                                <SelectItem key={m.id} value={String(m.id)}>
+                                                                                    {m.titulo}
+                                                                                </SelectItem>
+                                                                            ))}
+                                                                        </SelectContent>
+                                                                    </Select>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="space-y-2">
+                                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">URL da Foto do Coordenador</label>
+                                                                <Input
+                                                                    placeholder="https://exemplo.com/foto.jpg"
+                                                                    value={row.foto_url}
+                                                                    onChange={(e) => updateCoordinatorHistoryRow(index, "foto_url", e.target.value)}
+                                                                    className="rounded-xl h-11"
+                                                                />
+                                                            </div>
                                                         </div>
                                                     ))}
                                                 </div>
