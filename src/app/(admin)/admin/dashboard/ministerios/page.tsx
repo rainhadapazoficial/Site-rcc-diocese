@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
     Plus, Search, Trash2, Edit, Loader2,
     CheckCircle2, XCircle, Flame, History,
-    Users, Info, Palette
+    Users, Info, Palette, Image as ImageIcon
 } from "lucide-react";
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -25,6 +25,7 @@ export default function MinisteriosAdminPage() {
     const [formData, setFormData] = useState<any>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [coordinatorHistory, setCoordinatorHistory] = useState<{ nome: string; gestao: string }[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         fetchMinisterios();
@@ -66,6 +67,30 @@ export default function MinisteriosAdminPage() {
             return next;
         });
     }
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `ministerios/photos/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from("media")
+            .upload(filePath, file);
+
+        if (uploadError) {
+            alert("Erro ao enviar imagem: " + uploadError.message);
+            setIsUploading(false);
+            return;
+        }
+
+        const { data } = supabase.storage.from("media").getPublicUrl(filePath);
+        setFormData((prev: any) => ({ ...prev, imagem_url: data.publicUrl }));
+        setIsUploading(false);
+    };
 
     function removeCoordinatorHistoryRow(index: number) {
         setCoordinatorHistory((prev) => prev.filter((_, i) => i !== index));
@@ -223,14 +248,51 @@ export default function MinisteriosAdminPage() {
                                         <Input name="bienio" defaultValue={editingMinistry?.bienio} placeholder="Ex: 2025-2026" className="rounded-xl" />
                                     </div>
 
-                                    <div className="space-y-2 col-span-2">
-                                        <Label htmlFor="imagem_url">URL da Foto / Banner</Label>
-                                        <Input
-                                            id="imagem_url"
-                                            placeholder="https://exemplo.com/foto.jpg"
-                                            value={formData.imagem_url || ""}
-                                            onChange={(e) => setFormData({ ...formData, imagem_url: e.target.value })}
-                                        />
+                                    <div className="space-y-4 col-span-2 bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                                <ImageIcon className="w-4 h-4 text-brand-blue" />
+                                                Foto / Banner do Ministério
+                                            </label>
+                                            <div className="flex gap-2">
+                                                <Input
+                                                    type="file"
+                                                    id="file-upload"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={handleImageUpload}
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    disabled={isUploading}
+                                                    onClick={() => document.getElementById('file-upload')?.click()}
+                                                    className="rounded-xl border-brand-blue/20 text-brand-blue hover:bg-brand-blue hover:text-white"
+                                                >
+                                                    {isUploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+                                                    Fazer Upload
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex gap-4 items-start">
+                                            {formData.imagem_url && (
+                                                <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-white shadow-md shrink-0">
+                                                    <img src={formData.imagem_url} alt="Preview" className="w-full h-full object-cover" />
+                                                </div>
+                                            )}
+                                            <div className="flex-1 space-y-2">
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase">Ou cole o link direto</p>
+                                                <Input
+                                                    id="imagem_url"
+                                                    placeholder="https://exemplo.com/foto.jpg"
+                                                    value={formData.imagem_url || ""}
+                                                    onChange={(e) => setFormData({ ...formData, imagem_url: e.target.value })}
+                                                    className="rounded-xl h-12"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-2">
