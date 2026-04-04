@@ -50,7 +50,6 @@ export function Footer() {
                         <ul className="space-y-4 text-sm">
                             <li><Link href="/p/politica-de-privacidade" className="hover:underline opacity-80">Política de Privacidade</Link></li>
                             <li><Link href="/p/termos-de-uso" className="hover:underline opacity-80">Termos de Uso</Link></li>
-                            <li><Link href="/admin/login" className="hover:underline">Painel Administrativo</Link></li>
                         </ul>
                     </div>
 

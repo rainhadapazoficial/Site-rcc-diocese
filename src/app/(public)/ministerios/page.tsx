@@ -66,14 +66,18 @@ export default function MinisteriosPublicPage() {
         const ids = list.map((m: any) => m.id);
         const { data: historyData } = await supabase
             .from("ministerio_coordinator_history")
-            .select("ministerio_id, nome, gestao, ordem")
+            .select("ministerio_id, nome, gestao, imagem_url, ordem")
             .in("ministerio_id", ids)
             .order("ordem", { ascending: true });
 
         const historyByMin: Record<number, any[]> = {};
         (historyData || []).forEach((row: any) => {
             if (!historyByMin[row.ministerio_id]) historyByMin[row.ministerio_id] = [];
-            historyByMin[row.ministerio_id].push({ nome: row.nome, gestao: row.gestao });
+            historyByMin[row.ministerio_id].push({ 
+                nome: row.nome, 
+                gestao: row.gestao,
+                imagem_url: row.imagem_url 
+            });
         });
 
         setMinisterios(list.map((m: any) => ({
@@ -161,15 +165,24 @@ export default function MinisteriosPublicPage() {
                                                     <History className="w-5 h-5 text-brand-blue shrink-0 mt-0.5" />
                                                     <div className="min-w-0">
                                                         <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">Histórico de gestões</p>
-                                                        <ul className="text-xs text-gray-600 space-y-1">
+                                                        <ul className="text-xs text-gray-600 space-y-2">
                                                             {min.history.slice(0, 2).map((h: any, i: number) => (
-                                                                <li key={i} className="flex flex-wrap gap-1 items-baseline">
-                                                                    <span className="font-medium text-brand-blue/80">{h.nome}</span>
-                                                                    <span className="text-gray-400">({h.gestao})</span>
+                                                                <li key={i} className="flex items-center gap-2">
+                                                                    {h.imagem_url ? (
+                                                                        <img src={h.imagem_url} alt={h.nome} className="w-5 h-5 rounded-full object-cover border border-white shadow-sm" />
+                                                                    ) : (
+                                                                        <div className="w-5 h-5 rounded-full bg-gray-200 border border-white flex items-center justify-center">
+                                                                            <Users className="w-2.5 h-2.5 text-gray-400" />
+                                                                        </div>
+                                                                    )}
+                                                                    <div className="flex flex-wrap gap-1 items-baseline min-w-0">
+                                                                        <span className="font-medium text-brand-blue/80 truncate">{h.nome}</span>
+                                                                        <span className="text-[10px] text-gray-400">({h.gestao})</span>
+                                                                    </div>
                                                                 </li>
                                                             ))}
                                                             {min.history.length > 2 && (
-                                                                <li className="text-brand-gold font-bold">+{min.history.length - 2} outras gestões...</li>
+                                                                <li className="text-brand-gold font-bold pl-7">+{min.history.length - 2} outras gestões...</li>
                                                             )}
                                                         </ul>
                                                     </div>
@@ -261,11 +274,22 @@ export default function MinisteriosPublicPage() {
                                             </h4>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 {selectedMinistry.history.map((h: any, i: number) => (
-                                                    <div key={i} className="flex flex-col p-5 bg-gray-50/50 rounded-2xl border border-gray-100/50 hover:border-brand-gold/30 transition-colors">
-                                                        <p className="font-bold text-brand-blue text-lg">{h.nome}</p>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-brand-gold" />
-                                                            <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">{h.gestao}</p>
+                                                    <div key={i} className="flex items-center gap-4 p-4 bg-gray-50/50 rounded-2xl border border-gray-100/50 hover:border-brand-gold/30 transition-colors">
+                                                        {h.imagem_url ? (
+                                                            <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-white shadow-sm shrink-0">
+                                                                <img src={h.imagem_url} alt={h.nome} className="w-full h-full object-cover" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center text-gray-300 shrink-0">
+                                                                <Users className="w-6 h-6" />
+                                                            </div>
+                                                        )}
+                                                        <div className="min-w-0">
+                                                            <p className="font-bold text-brand-blue text-base leading-tight truncate">{h.nome}</p>
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-1 h-1 rounded-full bg-brand-gold" />
+                                                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{h.gestao}</p>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 ))}

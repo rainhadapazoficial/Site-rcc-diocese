@@ -24,7 +24,7 @@ export default function MinisteriosAdminPage() {
     const [editingMinistry, setEditingMinistry] = useState<any>(null);
     const [formData, setFormData] = useState<any>({});
     const [searchTerm, setSearchTerm] = useState("");
-    const [coordinatorHistory, setCoordinatorHistory] = useState<{ nome: string; gestao: string }[]>([]);
+    const [coordinatorHistory, setCoordinatorHistory] = useState<{ nome: string; gestao: string; imagem_url: string }[]>([]);
     const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
@@ -46,27 +46,55 @@ export default function MinisteriosAdminPage() {
     async function fetchCoordinatorHistory(ministryId: number) {
         const { data, error } = await supabase
             .from("ministerio_coordinator_history")
-            .select("id, nome, gestao, ordem")
+            .select("id, nome, gestao, imagem_url, ordem")
             .eq("ministerio_id", ministryId)
             .order("ordem", { ascending: true });
         if (error) {
             console.error("Error fetching coordinator history:", error);
             return [];
         }
-        return (data || []).map((r: { nome: string; gestao: string }) => ({ nome: r.nome, gestao: r.gestao }));
+        return (data || []).map((r: any) => ({ 
+            nome: r.nome, 
+            gestao: r.gestao, 
+            imagem_url: r.imagem_url || "" 
+        }));
     }
 
     function addCoordinatorHistoryRow() {
-        setCoordinatorHistory((prev) => [...prev, { nome: "", gestao: "" }]);
+        setCoordinatorHistory((prev) => [...prev, { nome: "", gestao: "", imagem_url: "" }]);
     }
 
-    function updateCoordinatorHistoryRow(index: number, field: "nome" | "gestao", value: string) {
+    function updateCoordinatorHistoryRow(index: number, field: "nome" | "gestao" | "imagem_url", value: string) {
         setCoordinatorHistory((prev) => {
             const next = [...prev];
             next[index] = { ...next[index], [field]: value };
             return next;
         });
     }
+
+    const handleHistoryImageUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const fileExt = file.name.split(".").pop();
+        const fileName = `hist_${Math.random()}.${fileExt}`;
+        const filePath = `ministerios/photos/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from("media")
+            .upload(filePath, file);
+
+        if (uploadError) {
+            alert("Erro ao enviar imagem do histórico: " + uploadError.message);
+            setIsUploading(false);
+            return;
+        }
+
+        const { data } = supabase.storage.from("media").getPublicUrl(filePath);
+        updateCoordinatorHistoryRow(index, "imagem_url", data.publicUrl);
+        setIsUploading(false);
+    };
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -135,10 +163,11 @@ export default function MinisteriosAdminPage() {
         const validHistory = coordinatorHistory.filter((h) => h.nome.trim() || h.gestao.trim());
         if (validHistory.length > 0) {
             await supabase.from("ministerio_coordinator_history").insert(
-                validHistory.map((h: { nome: string; gestao: string }, i: number) => ({
+                validHistory.map((h: any, i: number) => ({
                     ministerio_id: ministryId,
                     nome: h.nome.trim() || "(nome não informado)",
                     gestao: h.gestao.trim() || "(gestão não informada)",
+                    imagem_url: h.imagem_url,
                     ordem: i,
                 }))
             );
@@ -211,7 +240,7 @@ export default function MinisteriosAdminPage() {
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <DialogHeader>
                                     <DialogTitle className="text-xl font-bold italic text-brand-blue">
-                                        {editingMinistry ? "Editar Ministério" : "Novo Ministério"}
+                                        {editingMinistry ? "Editar Ministério (V3 - COM UPLOAD)" : "Novo Ministério (V3 - COM UPLOAD)"}
                                     </DialogTitle>
                                 </DialogHeader>
 
@@ -244,7 +273,7 @@ export default function MinisteriosAdminPage() {
                                         <Input name="coordenador" defaultValue={editingMinistry?.coordenador} placeholder="Nome do coordenador" className="rounded-xl" />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Gestão Atual (Biénio)</label>
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Gestão Atual (Biênio)</label>
                                         <Input name="bienio" defaultValue={editingMinistry?.bienio} placeholder="Ex: 2025-2026" className="rounded-xl" />
                                     </div>
 
@@ -276,23 +305,18 @@ export default function MinisteriosAdminPage() {
                                             </div>
                                         </div>
                                         
-                                        <div className="flex gap-4 items-start">
-                                            {formData.imagem_url && (
-                                                <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-white shadow-md shrink-0">
-                                                    <img src={formData.imagem_url} alt="Preview" className="w-full h-full object-cover" />
-                                                </div>
-                                            )}
-                                            <div className="flex-1 space-y-2">
-                                                <p className="text-[10px] text-gray-400 font-bold uppercase">Ou cole o link direto</p>
-                                                <Input
-                                                    id="imagem_url"
-                                                    placeholder="https://exemplo.com/foto.jpg"
-                                                    value={formData.imagem_url || ""}
-                                                    onChange={(e) => setFormData({ ...formData, imagem_url: e.target.value })}
-                                                    className="rounded-xl h-12"
-                                                />
+                                        {formData.imagem_url && (
+                                            <div className="w-full h-40 rounded-2xl overflow-hidden border-2 border-white shadow-md relative">
+                                                <img src={formData.imagem_url} alt="Preview" className="w-full h-full object-cover" />
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, imagem_url: "" })}
+                                                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow-lg"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">
@@ -310,7 +334,7 @@ export default function MinisteriosAdminPage() {
                                     <div className="flex items-center justify-between">
                                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
                                             <History className="w-4 h-4 text-brand-blue" />
-                                            Histórico de coordenadores (Ano a Ano)
+                                            Histórico de coordenadores (UPLOAD FOTO)
                                         </label>
                                         <Button type="button" variant="outline" size="sm" onClick={addCoordinatorHistoryRow} className="rounded-xl">
                                             <Plus className="w-4 h-4 mr-1" />
@@ -320,24 +344,58 @@ export default function MinisteriosAdminPage() {
                                     {coordinatorHistory.length === 0 ? (
                                         <p className="text-sm text-gray-400 italic py-2">Nenhum registro histórico.</p>
                                     ) : (
-                                        <div className="space-y-2">
+                                        <div className="grid grid-cols-1 gap-4">
                                             {coordinatorHistory.map((row, index) => (
-                                                <div key={index} className="flex gap-2 items-center rounded-xl border bg-gray-50/50 p-2">
-                                                    <Input
-                                                        placeholder="Nome do coordenador"
-                                                        value={row.nome}
-                                                        onChange={(e) => updateCoordinatorHistoryRow(index, "nome", e.target.value)}
-                                                        className="rounded-lg flex-1"
-                                                    />
-                                                    <Input
-                                                        placeholder="Gestão (ex: 2020-2022)"
-                                                        value={row.gestao}
-                                                        onChange={(e) => updateCoordinatorHistoryRow(index, "gestao", e.target.value)}
-                                                        className="rounded-lg w-36"
-                                                    />
-                                                    <Button type="button" variant="ghost" size="icon" onClick={() => removeCoordinatorHistoryRow(index)} className="text-gray-400 hover:text-red-500 shrink-0">
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
+                                                <div key={index} className="flex flex-col gap-4 rounded-[2rem] border bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+                                                    <div className="flex gap-4 items-center">
+                                                        {/* Avatar/Photo Section */}
+                                                        <div className="relative group shrink-0">
+                                                            {row.imagem_url ? (
+                                                                <img src={row.imagem_url} alt="Preview" className="w-16 h-16 rounded-2xl object-cover border-2 border-brand-blue/10 shadow-sm" />
+                                                            ) : (
+                                                                <div className="w-16 h-16 rounded-2xl bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 gap-1">
+                                                                    <ImageIcon className="w-6 h-6 opacity-30" />
+                                                                    <span className="text-[8px] font-bold uppercase">Foto</span>
+                                                                </div>
+                                                            )}
+                                                            <input
+                                                                type="file"
+                                                                id={`hist-file-${index}`}
+                                                                className="hidden"
+                                                                accept="image/*"
+                                                                onChange={(e) => handleHistoryImageUpload(index, e)}
+                                                            />
+                                                            <button 
+                                                                type="button"
+                                                                onClick={() => document.getElementById(`hist-file-${index}`)?.click()}
+                                                                className="absolute -bottom-1 -right-1 w-7 h-7 bg-brand-blue text-white rounded-xl flex items-center justify-center shadow-lg hover:bg-brand-gold transition-colors border-2 border-white"
+                                                                title="Subir foto"
+                                                            >
+                                                                <Plus className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Inputs Section */}
+                                                        <div className="flex-1 space-y-3">
+                                                            <div className="flex gap-2">
+                                                                <Input
+                                                                    placeholder="Nome completo do coordenador"
+                                                                    value={row.nome}
+                                                                    onChange={(e) => updateCoordinatorHistoryRow(index, "nome", e.target.value)}
+                                                                    className="rounded-xl flex-1 h-11"
+                                                                />
+                                                                <Input
+                                                                    placeholder="Biênio (ex: 2020-2022)"
+                                                                    value={row.gestao}
+                                                                    onChange={(e) => updateCoordinatorHistoryRow(index, "gestao", e.target.value)}
+                                                                    className="rounded-xl w-36 h-11 text-center font-bold"
+                                                                />
+                                                                <Button type="button" variant="ghost" size="icon" onClick={() => removeCoordinatorHistoryRow(index)} className="text-gray-300 hover:text-red-500 shrink-0">
+                                                                    <Trash2 className="w-5 h-5" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -345,8 +403,8 @@ export default function MinisteriosAdminPage() {
                                 </div>
 
                                 <DialogFooter className="sticky bottom-0 bg-white pt-4">
-                                    <Button type="submit" className="bg-brand-blue text-white w-full rounded-xl" disabled={isSubmitting}>
-                                        {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar Ministério"}
+                                    <Button type="submit" className="bg-brand-blue text-white w-full rounded-xl h-12 font-bold" disabled={isSubmitting}>
+                                        {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar Alterações e Fotos"}
                                     </Button>
                                 </DialogFooter>
                             </form>
