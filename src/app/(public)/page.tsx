@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Heart, Users, Calendar, Newspaper, Radio, Clock, MapPin } from "lucide-react";
+import { ChevronRight, Heart, Users, Calendar, Newspaper, Radio, Clock, MapPin, Mic2, Baby, Flame, ShieldCheck, BookOpen, Music, Share2, Scale, HandHelping, GraduationCap } from "lucide-react";
 import { HeroCarousel } from "@/components/public/HeroCarousel";
 
 export const revalidate = 0;
@@ -65,12 +65,27 @@ async function getGroupsByForania() {
 async function getLatestMinistries() {
     const { data, error } = await supabase
         .from('ministerios')
-        .select('id, nome, descricao, coordenador, cor')
+        .select('id, nome, descricao, coordenador, cor, bienio, imagem_url')
         .order('ordem', { ascending: true })
-        .limit(3);
+        .limit(6);
     if (error) console.error('Error fetching latest ministries:', error);
     return data || [];
 }
+
+const iconMap: Record<string, any> = {
+    "Mic2": Mic2,
+    "Heart": Heart,
+    "Baby": Baby,
+    "Flame": Flame,
+    "Users": Users,
+    "ShieldCheck": ShieldCheck,
+    "BookOpen": BookOpen,
+    "Music": Music,
+    "Share2": Share2,
+    "Scale": Scale,
+    "HandHelping": HandHelping,
+    "GraduationCap": GraduationCap
+};
 
 async function getHomeBanners() {
     const { data } = await supabase
@@ -253,28 +268,51 @@ export default async function HomePage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
                         {latestMinistries.length > 0 ? (
                             latestMinistries.map((min: any) => (
-                                <div key={min.id} className="bg-white p-10 rounded-[4rem] shadow-sm border border-gray-100/50 group hover:shadow-2xl transition-all duration-700 flex flex-col relative overflow-hidden">
-                                    <div className={`absolute top-0 right-0 w-32 h-32 ${min.cor || 'bg-brand-blue/5'} opacity-10 rounded-bl-full transition-all group-hover:scale-150 group-hover:opacity-20`} />
+                                    <div key={min.id} className="bg-white p-10 rounded-[4rem] shadow-sm border border-gray-100/50 group hover:shadow-2xl transition-all duration-700 flex flex-col relative overflow-hidden h-full">
+                                        <div className={`absolute top-0 right-0 w-32 h-32 ${min.cor || 'bg-brand-blue/5'} opacity-10 rounded-bl-full transition-all group-hover:scale-150 group-hover:opacity-20`} />
 
-                                    <div className={`w-16 h-16 rounded-3xl mb-8 ${min.cor || 'bg-brand-blue/5 text-brand-blue'} flex items-center justify-center group-hover:scale-110 group-hover:-rotate-6 transition-all duration-500`}>
-                                        <Heart className="w-8 h-8" />
-                                    </div>
-
-                                    <h3 className="text-2xl font-bold text-brand-blue mb-4 italic group-hover:text-brand-gold transition-colors">{min.nome}</h3>
-                                    <p className="text-gray-500 text-sm italic mb-10 flex-1 line-clamp-4 leading-relaxed">"{min.descricao}"</p>
-
-                                    <div className="pt-8 border-t border-gray-50 flex items-center justify-between">
-                                        <div>
-                                            <p className="text-[10px] uppercase font-bold text-gray-400 tracking-tighter">Coordenação Atual</p>
-                                            <p className="font-bold text-brand-blue text-base">{min.coordenador || 'A definir'}</p>
+                                        <div className="flex justify-between items-start mb-8">
+                                            {(() => {
+                                                const IconComp = iconMap[min.nome.split(' ').pop() || ""] || iconMap[Object.keys(iconMap).find(k => min.nome.includes(k)) || ""] || Flame;
+                                                return (
+                                                    <div className={`w-16 h-16 rounded-3xl ${min.cor || 'bg-brand-blue/5 text-brand-blue'} flex items-center justify-center group-hover:scale-110 group-hover:-rotate-6 transition-all duration-500`}>
+                                                        <IconComp className="w-8 h-8" />
+                                                    </div>
+                                                );
+                                            })()}
+                                            {min.bienio && (
+                                                <span className="text-[10px] font-bold text-brand-gold bg-brand-gold/5 px-4 py-1.5 rounded-full uppercase tracking-widest border border-brand-gold/10">
+                                                    Gestão {min.bienio}
+                                                </span>
+                                            )}
                                         </div>
-                                        <Link href="/ministerios">
-                                            <Button variant="ghost" size="icon" className="w-12 h-12 rounded-2xl bg-brand-gold/5 text-brand-gold group-hover:bg-brand-gold group-hover:text-white transition-all shadow-sm">
-                                                <ChevronRight className="w-6 h-6" />
-                                            </Button>
-                                        </Link>
+
+                                        <h3 className="text-2xl font-bold text-brand-blue mb-4 italic group-hover:text-brand-gold transition-colors">{min.nome}</h3>
+                                        <p className="text-gray-500 text-sm italic mb-10 flex-1 line-clamp-4 leading-relaxed">"{min.descricao}"</p>
+
+                                        <div className="pt-8 border-t border-gray-50 flex items-center justify-between mt-auto">
+                                            <div className="flex items-center gap-3">
+                                                {min.imagem_url ? (
+                                                    <div className="w-12 h-12 rounded-2xl overflow-hidden border-2 border-brand-blue/5 shadow-sm">
+                                                        <img src={min.imagem_url} alt={min.coordenador} className="w-full h-full object-cover" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-12 h-12 rounded-2xl bg-brand-blue/5 flex items-center justify-center text-brand-blue shadow-sm">
+                                                        <Users className="w-6 h-6" />
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <p className="text-[10px] uppercase font-bold text-gray-400 tracking-tighter">Coordenação Atual</p>
+                                                    <p className="font-bold text-brand-blue text-base">{min.coordenador || 'A definir'}</p>
+                                                </div>
+                                            </div>
+                                            <Link href="/ministerios">
+                                                <Button variant="ghost" size="icon" className="w-12 h-12 rounded-2xl bg-brand-gold/5 text-brand-gold group-hover:bg-brand-gold group-hover:text-white transition-all shadow-sm">
+                                                    <ChevronRight className="w-6 h-6" />
+                                                </Button>
+                                            </Link>
+                                        </div>
                                     </div>
-                                </div>
                             ))
                         ) : (
                             <div className="col-span-3 py-12 text-gray-400 italic">Nenhum ministério cadastrado.</div>
