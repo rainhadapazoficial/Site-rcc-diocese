@@ -63,7 +63,7 @@ async function syncRCCNews() {
                 slug,
                 category: 'RCC Brasil',
                 author: 'Portal RCC Brasil',
-                date: pubDate.toLocaleDateString('pt-BR'),
+                date: pubDate.toISOString().split('T')[0],
                 image_url,
                 created_at: pubDate.toISOString()
             };
