@@ -44,7 +44,7 @@ export default function GruposClient() {
         setIsLoading(true);
         const { data: groupsData, error: groupsError } = await supabase
             .from("groups")
-            .select("*")
+            .select("*, foranias(nome)")
             .order("nome", { ascending: true });
 
         if (groupsError) {
@@ -131,137 +131,173 @@ export default function GruposClient() {
                         <p className="font-bold italic">Carregando grupos...</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {filteredGroups.length > 0 ? (
-                            filteredGroups.map((group) => (
-                                <Card key={group.id} className="group overflow-hidden rounded-[3rem] border-none shadow-sm hover:shadow-2xl transition-all duration-500 bg-white flex flex-col">
-                                    <CardContent className="p-8 space-y-6 flex-1 flex flex-col">
-                                        <div className="flex items-center gap-4">
-                                            {(group.logo_url && group.logo_url.length > 10) || (group.imagem && group.imagem.length > 10) ? (
-                                                <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-sm shrink-0 bg-white flex items-center justify-center p-1 border border-gray-100">
-                                                    <img 
-                                                        src={group.logo_url || group.imagem} 
-                                                        alt={group.nome} 
-                                                        className="w-full h-full object-contain" 
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div className="w-16 h-16 bg-brand-blue/5 rounded-2xl flex items-center justify-center group-hover:bg-brand-blue transition-colors duration-500 shrink-0">
-                                                    <Users className="w-8 h-8 text-brand-blue group-hover:text-white transition-colors duration-500" />
-                                                </div>
-                                            )}
-                                            <div>
-                                                <h3 className="text-2xl font-bold text-brand-blue italic line-clamp-1">{group.nome}</h3>
-                                                <p className="text-brand-gold font-bold flex items-center gap-1 uppercase tracking-widest text-[10px]">
-                                                    <MapPin className="w-3 h-3" /> {group.cidade}
-                                                </p>
-                                            </div>
-                                        </div>
+                    <div className="space-y-16">
+                        {(() => {
+                            // Agrupar grupos por forania
+                            const groupsByForania: Record<string, any[]> = {};
+                            filteredGroups.forEach(group => {
+                                const foraniaName = group.foranias?.nome || "Diocese de Sinop";
+                                if (!groupsByForania[foraniaName]) groupsByForania[foraniaName] = [];
+                                groupsByForania[foraniaName].push(group);
+                            });
 
-                                        {group.descricao && (
-                                            <p className="text-sm text-gray-500 line-clamp-3 leading-relaxed">
-                                                {group.descricao}
-                                            </p>
-                                        )}
+                            const foraniaNames = Object.keys(groupsByForania).sort((a, b) => {
+                                if (a === "Diocese de Sinop") return 1;
+                                if (b === "Diocese de Sinop") return -1;
+                                return a.localeCompare(b);
+                            });
 
-                                        <div className="space-y-4 text-gray-600">
-                                            <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl">
-                                                <Clock className="w-5 h-5 text-brand-blue shrink-0 mt-0.5" />
-                                                <div>
-                                                    <p className="text-[10px] uppercase font-bold text-gray-400">Quando acontece</p>
-                                                    <p className="font-medium">{group.dia}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl">
-                                                <MapPin className="w-5 h-5 text-brand-blue shrink-0 mt-0.5" />
-                                                <div>
-                                                    <p className="text-[10px] uppercase font-bold text-gray-400">Localização</p>
-                                                    <p className="font-medium">{group.local}</p>
-                                                </div>
-                                            </div>
-                                            {group.coordenador && (
-                                                <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl">
-                                                    <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-brand-blue/10">
-                                                        <img
-                                                            src={group.coordenador_foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(group.coordenador)}&background=1e3a5f&color=fff`}
-                                                            alt={group.coordenador}
-                                                            className="w-full h-full object-cover"
-                                                        />
+                            if (foraniaNames.length === 0) {
+                                return (
+                                    <div className="py-20 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed rounded-[3rem] bg-white">
+                                        <Search className="w-16 h-16 mb-4 opacity-10" />
+                                        <p className="text-xl font-bold italic text-brand-blue">Nenhum grupo encontrado.</p>
+                                        <p className="text-sm">Tente buscar por outro nome ou cidade.</p>
+                                    </div>
+                                );
+                            }
+
+                            return foraniaNames.map(foraniaName => (
+                                <div key={foraniaName} className="space-y-8">
+                                    <div className="flex items-center gap-6">
+                                        <h2 className="text-2xl md:text-3xl font-black text-brand-blue italic uppercase tracking-tight flex items-center gap-4 shrink-0">
+                                            <div className="w-2 h-8 bg-brand-gold rounded-full" />
+                                            {foraniaName}
+                                        </h2>
+                                        <div className="h-[1px] bg-brand-blue/10 flex-1" />
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] bg-gray-100 px-4 py-1.5 rounded-full">
+                                            {groupsByForania[foraniaName].length} {groupsByForania[foraniaName].length === 1 ? "Grupo" : "Grupos"}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                        {groupsByForania[foraniaName].map((group) => (
+                                            <Card key={group.id} className="group overflow-hidden rounded-[3rem] border-none shadow-sm hover:shadow-2xl transition-all duration-500 bg-white flex flex-col">
+                                                {/* Reutilizando CardContent original */}
+                                                <CardContent className="p-8 space-y-6 flex-1 flex flex-col">
+                                                    <div className="flex items-center gap-4">
+                                                        {(group.logo_url && group.logo_url.length > 10) || (group.imagem && group.imagem.length > 10) ? (
+                                                            <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-sm shrink-0 bg-white flex items-center justify-center p-1 border border-gray-100">
+                                                                <img 
+                                                                    src={group.logo_url || group.imagem} 
+                                                                    alt={group.nome} 
+                                                                    className="w-full h-full object-contain" 
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-16 h-16 bg-brand-blue/5 rounded-2xl flex items-center justify-center group-hover:bg-brand-blue transition-colors duration-500 shrink-0">
+                                                                <Users className="w-8 h-8 text-brand-blue group-hover:text-white transition-colors duration-500" />
+                                                            </div>
+                                                        )}
+                                                        <div>
+                                                            <h3 className="text-2xl font-bold text-brand-blue italic line-clamp-1">{group.nome}</h3>
+                                                            <p className="text-brand-gold font-bold flex items-center gap-1 uppercase tracking-widest text-[10px]">
+                                                                <MapPin className="w-3 h-3" /> {group.cidade}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <div className="min-w-0">
-                                                        <p className="text-[10px] uppercase font-bold text-gray-400">Coordenação atual</p>
-                                                        <p className="font-medium truncate">{group.coordenador}</p>
+
+                                                    {group.descricao && (
+                                                        <p className="text-sm text-gray-500 line-clamp-3 leading-relaxed">
+                                                            {group.descricao}
+                                                        </p>
+                                                    )}
+
+                                                    <div className="space-y-4 text-gray-600">
+                                                        <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl">
+                                                            <Clock className="w-5 h-5 text-brand-blue shrink-0 mt-0.5" />
+                                                            <div>
+                                                                <p className="text-[10px] uppercase font-bold text-gray-400">Quando acontece</p>
+                                                                <p className="font-medium">{group.dia}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl">
+                                                            <MapPin className="w-5 h-5 text-brand-blue shrink-0 mt-0.5" />
+                                                            <div>
+                                                                <p className="text-[10px] uppercase font-bold text-gray-400">Localização</p>
+                                                                <p className="font-medium">{group.local}</p>
+                                                            </div>
+                                                        </div>
+                                                        {group.coordenador && (
+                                                            <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl">
+                                                                <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-brand-blue/10">
+                                                                    <img
+                                                                        src={group.coordenador_foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(group.coordenador)}&background=1e3a5f&color=fff`}
+                                                                        alt={group.coordenador}
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="text-[10px] uppercase font-bold text-gray-400">Coordenação atual</p>
+                                                                    <p className="font-medium truncate">{group.coordenador}</p>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {group.coordinatorHistory && group.coordinatorHistory.length > 0 && (
+                                                            <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl">
+                                                                <History className="w-5 h-5 text-brand-blue shrink-0 mt-0.5" />
+                                                                <div className="min-w-0">
+                                                                    <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">Histórico de coordenadores</p>
+                                                                    <ul className="text-sm text-gray-600 space-y-0.5">
+                                                                        {group.coordinatorHistory.map((h: { nome: string; gestao: string }, i: number) => (
+                                                                            <li key={i} className="flex flex-wrap gap-1">
+                                                                                <span className="font-medium">{h.nome}</span>
+                                                                                <span className="text-gray-400">({h.gestao})</span>
+                                                                            </li>
+                                                                        ))}
+                                                                    </ul>
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                </div>
-                                            )}
-                                            {group.coordinatorHistory && group.coordinatorHistory.length > 0 && (
-                                                <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl">
-                                                    <History className="w-5 h-5 text-brand-blue shrink-0 mt-0.5" />
-                                                    <div className="min-w-0">
-                                                        <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">Histórico de coordenadores</p>
-                                                        <ul className="text-sm text-gray-600 space-y-0.5">
-                                                            {group.coordinatorHistory.map((h: { nome: string; gestao: string }, i: number) => (
-                                                                <li key={i} className="flex flex-wrap gap-1">
-                                                                    <span className="font-medium">{h.nome}</span>
-                                                                    <span className="text-gray-400">({h.gestao})</span>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
+
+                                                    <div className="pt-6 mt-auto space-y-4">
+                                                        <div className="flex gap-2 justify-center">
+                                                            {group.whatsapp && (
+                                                                <a href={group.whatsapp} target="_blank" rel="noopener noreferrer" className="p-3 bg-green-50 text-green-600 rounded-xl hover:bg-green-600 hover:text-white transition-all transform hover:scale-110">
+                                                                    <MessageCircle className="w-5 h-5 fill-current" />
+                                                                </a>
+                                                            )}
+                                                            {group.instagram && (
+                                                                <a href={group.instagram} target="_blank" rel="noopener noreferrer" className="p-3 bg-pink-50 text-pink-600 rounded-xl hover:bg-pink-600 hover:text-white transition-all transform hover:scale-110">
+                                                                    <Instagram className="w-5 h-5" />
+                                                                </a>
+                                                            )}
+                                                            {group.facebook && (
+                                                                <a href={group.facebook} target="_blank" rel="noopener noreferrer" className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110">
+                                                                    <Facebook className="w-5 h-5" />
+                                                                </a>
+                                                            )}
+                                                            {group.site && (
+                                                                <a href={group.site} target="_blank" rel="noopener noreferrer" className="p-3 bg-brand-blue/5 text-brand-blue rounded-xl hover:bg-brand-blue hover:text-white transition-all transform hover:scale-110">
+                                                                    <Globe className="w-5 h-5" />
+                                                                </a>
+                                                            )}
+                                                        </div>
+
+                                                        {group.geolocalizacao && (
+                                                            <a href={group.geolocalizacao} target="_blank" rel="noopener noreferrer" className="block">
+                                                                <Button variant="outline" className="w-full h-12 rounded-xl border-brand-blue/10 hover:border-brand-blue hover:bg-brand-blue hover:text-white transition-all gap-2">
+                                                                    <MapPin className="w-4 h-4" />
+                                                                    Como Chegar
+                                                                </Button>
+                                                            </a>
+                                                        )}
+
+                                                        <Button
+                                                            onClick={() => setSelectedGroup(group)}
+                                                            className="w-full h-12 rounded-xl bg-brand-gold hover:bg-yellow-600 text-brand-blue font-bold shadow-sm"
+                                                        >
+                                                            Conhecer Grupo
+                                                        </Button>
                                                     </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="pt-6 mt-auto space-y-4">
-                                            <div className="flex gap-2 justify-center">
-                                                {group.whatsapp && (
-                                                    <a href={group.whatsapp} target="_blank" rel="noopener noreferrer" className="p-3 bg-green-50 text-green-600 rounded-xl hover:bg-green-600 hover:text-white transition-all transform hover:scale-110">
-                                                        <MessageCircle className="w-5 h-5 fill-current" />
-                                                    </a>
-                                                )}
-                                                {group.instagram && (
-                                                    <a href={group.instagram} target="_blank" rel="noopener noreferrer" className="p-3 bg-pink-50 text-pink-600 rounded-xl hover:bg-pink-600 hover:text-white transition-all transform hover:scale-110">
-                                                        <Instagram className="w-5 h-5" />
-                                                    </a>
-                                                )}
-                                                {group.facebook && (
-                                                    <a href={group.facebook} target="_blank" rel="noopener noreferrer" className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110">
-                                                        <Facebook className="w-5 h-5" />
-                                                    </a>
-                                                )}
-                                                {group.site && (
-                                                    <a href={group.site} target="_blank" rel="noopener noreferrer" className="p-3 bg-brand-blue/5 text-brand-blue rounded-xl hover:bg-brand-blue hover:text-white transition-all transform hover:scale-110">
-                                                        <Globe className="w-5 h-5" />
-                                                    </a>
-                                                )}
-                                            </div>
-
-                                            {group.geolocalizacao && (
-                                                <a href={group.geolocalizacao} target="_blank" rel="noopener noreferrer" className="block">
-                                                    <Button variant="outline" className="w-full h-12 rounded-xl border-brand-blue/10 hover:border-brand-blue hover:bg-brand-blue hover:text-white transition-all gap-2">
-                                                        <MapPin className="w-4 h-4" />
-                                                        Como Chegar
-                                                    </Button>
-                                                </a>
-                                            )}
-
-                                            <Button
-                                                onClick={() => setSelectedGroup(group)}
-                                                className="w-full h-12 rounded-xl bg-brand-gold hover:bg-yellow-600 text-brand-blue font-bold shadow-sm"
-                                            >
-                                                Conhecer Grupo
-                                            </Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))
-                        ) : (
-                            <div className="col-span-full py-20 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed rounded-[3rem] bg-white">
-                                <Search className="w-16 h-16 mb-4 opacity-10" />
-                                <p className="text-xl font-bold italic text-brand-blue">Nenhum grupo encontrado.</p>
-                                <p className="text-sm">Tente buscar por outro nome ou cidade.</p>
-                            </div>
-                        )}
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                </div>
+                            ));
+                        })()}
                     </div>
                 )}
             </div>
