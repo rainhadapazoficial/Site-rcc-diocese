@@ -264,95 +264,104 @@ export default function GruposClient() {
 
             {/* Details Modal */}
             <Dialog open={!!selectedGroup} onOpenChange={(open) => !open && setSelectedGroup(null)}>
-                <DialogContent className="max-w-3xl rounded-[2.5rem] p-0 overflow-hidden border-none max-h-[90vh] flex flex-col">
+                <DialogContent className="max-w-5xl rounded-[3rem] p-0 overflow-hidden border-none max-h-[92vh] flex flex-col">
                     {selectedGroup && (
                         <>
-                            <div className="relative h-64 shrink-0">
+                            <div className="relative h-72 shrink-0">
                                 {selectedGroup.imagem && selectedGroup.imagem.length > 10 ? (
                                     <img src={selectedGroup.imagem} alt={selectedGroup.nome} className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full bg-brand-blue flex items-center justify-center">
-                                        <Users className="w-24 h-24 text-white/20" />
+                                        <Users className="w-32 h-32 text-white/20" />
                                     </div>
                                 )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                                <div className="absolute bottom-6 left-8 right-8">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className="text-[10px] font-bold text-brand-gold bg-brand-gold/10 px-3 py-1 rounded-full uppercase tracking-widest backdrop-blur-md border border-brand-gold/20">
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                                <div className="absolute bottom-8 left-10 right-10">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <span className="text-[11px] font-bold text-brand-gold bg-brand-gold/10 px-4 py-1.5 rounded-full uppercase tracking-widest backdrop-blur-md border border-brand-gold/20">
                                             {selectedGroup.cidade}
                                         </span>
                                     </div>
-                                    <h2 className="text-3xl font-bold text-white italic">{selectedGroup.nome}</h2>
+                                    <h2 className="text-4xl md:text-5xl font-black text-white italic tracking-tight">{selectedGroup.nome}</h2>
                                 </div>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-8 space-y-8">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                        <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sobre o Grupo</h4>
-                                        <p className="text-gray-600 leading-relaxed italic">
-                                            {selectedGroup.descricao || "Nenhuma descrição disponível."}
-                                        </p>
+                            <div className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
+                                <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-12">
+                                    <div className="space-y-6">
+                                        <div className="space-y-4">
+                                            <h4 className="text-[11px] font-black text-brand-blue/40 uppercase tracking-[0.2em]">Sobre o Grupo de Oração</h4>
+                                            <p className="text-gray-600 text-lg leading-relaxed italic font-medium">
+                                                {selectedGroup.descricao || "Nenhuma descrição disponível."}
+                                            </p>
+                                        </div>
 
-                                        <div className="pt-4 flex gap-3">
+                                        <div className="pt-6 flex gap-4">
                                             {selectedGroup.whatsapp && (
-                                                <a href={selectedGroup.whatsapp} target="_blank" rel="noopener noreferrer" className="p-4 bg-green-50 text-green-600 rounded-2xl hover:bg-green-600 hover:text-white transition-all transform hover:scale-110 shadow-sm">
-                                                    <MessageCircle className="w-6 h-6 fill-current" />
+                                                <a href={selectedGroup.whatsapp} target="_blank" rel="noopener noreferrer" className="p-5 bg-green-50 text-green-600 rounded-2xl hover:bg-green-600 hover:text-white transition-all transform hover:scale-110 shadow-sm border border-green-100/50">
+                                                    <MessageCircle className="w-7 h-7 fill-current" />
                                                 </a>
                                             )}
                                             {selectedGroup.instagram && (
-                                                <a href={selectedGroup.instagram} target="_blank" rel="noopener noreferrer" className="p-4 bg-pink-50 text-pink-600 rounded-2xl hover:bg-pink-600 hover:text-white transition-all transform hover:scale-110 shadow-sm">
-                                                    <Instagram className="w-6 h-6" />
+                                                <a href={selectedGroup.instagram} target="_blank" rel="noopener noreferrer" className="p-5 bg-pink-50 text-pink-600 rounded-2xl hover:bg-pink-600 hover:text-white transition-all transform hover:scale-110 shadow-sm border border-pink-100/50">
+                                                    <Instagram className="w-7 h-7" />
                                                 </a>
                                             )}
                                             {selectedGroup.facebook && (
-                                                <a href={selectedGroup.facebook} target="_blank" rel="noopener noreferrer" className="p-4 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110 shadow-sm">
-                                                    <Facebook className="w-6 h-6" />
+                                                <a href={selectedGroup.facebook} target="_blank" rel="noopener noreferrer" className="p-5 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110 shadow-sm border border-blue-100/50">
+                                                    <Facebook className="w-7 h-7" />
                                                 </a>
                                             )}
                                             {selectedGroup.site && (
-                                                <a href={selectedGroup.site} target="_blank" rel="noopener noreferrer" className="p-4 bg-brand-blue/5 text-brand-blue rounded-2xl hover:bg-brand-blue hover:text-white transition-all transform hover:scale-110 shadow-sm">
-                                                    <Globe className="w-6 h-6" />
+                                                <a href={selectedGroup.site} target="_blank" rel="noopener noreferrer" className="p-5 bg-brand-blue/5 text-brand-blue rounded-2xl hover:bg-brand-blue hover:text-white transition-all transform hover:scale-110 shadow-sm border border-brand-blue/10">
+                                                    <Globe className="w-7 h-7" />
                                                 </a>
                                             )}
                                         </div>
                                     </div>
 
                                     <div className="space-y-6">
-                                        <div className="bg-gray-50 p-6 rounded-[2rem] space-y-4 border border-gray-100">
-                                            <div className="flex items-start gap-4">
-                                                <Clock className="w-6 h-6 text-brand-blue shrink-0 mt-0.5" />
+                                        <div className="bg-gray-50/80 p-8 rounded-[2.5rem] space-y-6 border border-gray-100 backdrop-blur-sm">
+                                            <div className="flex items-start gap-5">
+                                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-brand-blue/5">
+                                                    <Clock className="w-6 h-6 text-brand-blue" />
+                                                </div>
                                                 <div>
-                                                    <p className="text-[10px] uppercase font-bold text-gray-400">Quando</p>
-                                                    <p className="font-bold text-brand-blue">{selectedGroup.dia}</p>
+                                                    <p className="text-[10px] uppercase font-black text-gray-400 tracking-wider">Quando acontece</p>
+                                                    <p className="font-bold text-brand-blue text-lg">{selectedGroup.dia}</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-start gap-4">
-                                                <MapPin className="w-6 h-6 text-brand-blue shrink-0 mt-0.5" />
+                                            <div className="flex items-start gap-5">
+                                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-brand-blue/5">
+                                                    <MapPin className="w-6 h-6 text-brand-blue" />
+                                                </div>
                                                 <div>
-                                                    <p className="text-[10px] uppercase font-bold text-gray-400">Local</p>
-                                                    <p className="font-bold text-brand-blue">{selectedGroup.local}</p>
+                                                    <p className="text-[10px] uppercase font-black text-gray-400 tracking-wider">Localização</p>
+                                                    <p className="font-bold text-brand-blue text-lg leading-snug">{selectedGroup.local}</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-4 bg-brand-blue/5 p-4 rounded-3xl border border-brand-blue/10">
-                                                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-md shrink-0">
-                                                    <img
-                                                        src={selectedGroup.coordenador_foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedGroup.coordenador || "C")}&background=1e3a5f&color=fff`}
-                                                        alt={selectedGroup.coordenador}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] uppercase font-bold text-gray-400">Coordenador(a) Atual</p>
-                                                    <p className="font-bold text-brand-blue text-xl">{selectedGroup.coordenador || "A definir"}</p>
+                                            
+                                            <div className="pt-4 mt-4 border-t border-gray-200/50">
+                                                <div className="flex items-center gap-5 bg-brand-blue/5 p-5 rounded-[2rem] border border-brand-blue/10">
+                                                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-lg shrink-0">
+                                                        <img
+                                                            src={selectedGroup.coordenador_foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedGroup.coordenador || "C")}&background=1e3a5f&color=fff`}
+                                                            alt={selectedGroup.coordenador}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] uppercase font-black text-gray-400 tracking-wider">Coordenação Atual</p>
+                                                        <p className="font-bold text-brand-blue text-xl leading-tight">{selectedGroup.coordenador || "A definir"}</p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
                                         {selectedGroup.geolocalizacao && (
                                             <a href={selectedGroup.geolocalizacao} target="_blank" rel="noopener noreferrer" className="block">
-                                                <Button className="w-full h-14 rounded-2xl bg-brand-blue hover:bg-brand-blue/90 text-white font-bold gap-2 shadow-lg transform hover:-translate-y-1 transition-all">
-                                                    <MapPin className="w-5 h-5" />
+                                                <Button className="w-full h-16 rounded-[1.5rem] bg-brand-blue hover:bg-brand-blue/90 text-white font-bold gap-3 shadow-xl transform hover:-translate-y-1 transition-all text-lg">
+                                                    <MapPin className="w-6 h-6" />
                                                     Como chegar pelo GPS
                                                 </Button>
                                             </a>
@@ -361,15 +370,19 @@ export default function GruposClient() {
                                 </div>
 
                                 {selectedGroup.coordinatorHistory && selectedGroup.coordinatorHistory.length > 0 && (
-                                    <div className="space-y-4 pt-4">
-                                        <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                            <History className="w-4 h-4 text-brand-blue" />
-                                            Histórico de Coordenação
-                                        </h4>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-6 pt-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-px bg-gray-200 flex-1" />
+                                            <h4 className="text-[11px] font-black text-brand-blue/40 uppercase tracking-[0.2em] flex items-center gap-3 px-4">
+                                                <History className="w-5 h-5 text-brand-blue" />
+                                                Histórico de Coordenação
+                                            </h4>
+                                            <div className="h-px bg-gray-200 flex-1" />
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                             {selectedGroup.coordinatorHistory.map((h: any, i: number) => (
-                                                <div key={i} className="flex items-center gap-3 p-3 bg-gray-50/80 rounded-2xl border border-gray-100 hover:bg-white hover:shadow-md transition-all group/hist">
-                                                    <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-gray-200 group-hover/hist:border-brand-gold transition-colors">
+                                                <div key={i} className="flex items-center gap-4 p-4 bg-gray-50/50 rounded-3xl border border-gray-100/50 hover:bg-white hover:shadow-xl transition-all duration-300 group/hist hover:-translate-y-1">
+                                                    <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 border-2 border-white shadow-sm group-hover/hist:shadow-brand-gold/20 transition-all">
                                                         <img
                                                             src={h.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(h.nome)}&background=f1f5f9&color=64748b`}
                                                             alt={h.nome}
@@ -377,8 +390,8 @@ export default function GruposClient() {
                                                         />
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <p className="font-bold text-brand-blue truncate">{h.nome}</p>
-                                                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{h.gestao}</p>
+                                                        <p className="font-bold text-brand-blue truncate text-base">{h.nome}</p>
+                                                        <p className="text-[10px] text-brand-gold font-black uppercase tracking-widest bg-brand-gold/5 px-2 py-0.5 rounded-full inline-block">{h.gestao}</p>
                                                     </div>
                                                 </div>
                                             ))}
