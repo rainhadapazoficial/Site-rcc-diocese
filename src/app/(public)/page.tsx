@@ -181,6 +181,64 @@ export default async function HomePage() {
                 </div>
             </section>
 
+            {/* Upcoming Events / Calendário */}
+            <section className="py-24 bg-gray-50 border-t border-gray-100">
+                <div className="max-w-5xl mx-auto px-4">
+                    <div className="text-center mb-20 text-balance">
+                        <h2 className="text-4xl font-bold text-brand-blue italic underline decoration-brand-gold decoration-4 underline-offset-8">Calendário Diocesano e Eventos</h2>
+                    </div>
+
+                    <div className="space-y-8">
+                        {latestEvents.length > 0 ? (
+                            latestEvents.map((event: any) => (
+                                <div key={event.id} className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 flex flex-col md:flex-row hover:shadow-xl transition-all duration-500 group">
+                                    <div className="bg-brand-blue md:w-40 p-10 flex flex-col items-center justify-center text-white text-center group-hover:bg-brand-gold transition-colors duration-500">
+                                        <Calendar className="w-8 h-8 mb-3 opacity-80" />
+                                        <span className="text-xl font-black uppercase tracking-tighter">
+                                            {event.date.includes('-')
+                                                ? new Date(event.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+                                                : event.date.split(',')[0]}
+                                        </span>
+                                    </div>
+                                    <div className="flex-1 p-8 space-y-4">
+                                        <h3 className="text-2xl font-bold text-gray-900 group-hover:text-brand-blue transition-colors">{event.title}</h3>
+                                        <div className="flex flex-wrap gap-6 text-sm">
+                                            <div className="flex items-center gap-2 text-gray-500">
+                                                <Clock className="w-5 h-5 text-brand-gold" />
+                                                <span className="font-medium">{event.time || "Horário a confirmar"}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-gray-500">
+                                                <MapPin className="w-5 h-5 text-brand-gold" />
+                                                <span className="font-medium line-clamp-1">{event.location}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="p-8 flex items-center justify-center bg-gray-50/50">
+                                        <Link href="/eventos">
+                                            <Button className="rounded-xl border-none bg-brand-blue/5 text-brand-blue hover:bg-brand-blue hover:text-white transition-all font-bold px-6 h-12">
+                                                Saber Mais
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed border-gray-200">
+                                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                                <p className="text-gray-400 italic font-medium">Fique atento! Novas programações em breve.</p>
+                            </div>
+                        )}
+                        <div className="text-center mt-16">
+                            <Link href="/eventos">
+                                <Button className="bg-brand-blue text-white px-10 h-14 rounded-2xl shadow-lg hover:shadow-brand-blue/20 transition-all font-bold">
+                                    Visualizar Calendário Completo
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Grupos de Oração Section */}
             <section id="grupos" className="py-24 bg-brand-blue/5 border-t border-gray-100">
                 <div className="max-w-7xl mx-auto px-4">
@@ -298,7 +356,9 @@ export default async function HomePage() {
                                                     </div>
                                                 ) : (
                                                     <div className="w-12 h-12 rounded-2xl bg-brand-blue/5 flex items-center justify-center text-brand-blue shadow-sm">
-                                                        <Users className="w-6 h-6" />
+                                                        <div className="text-[10px] items-center flex flex-col">
+                                                            <Users className="w-5 h-5 mb-0.5" />
+                                                        </div>
                                                     </div>
                                                 )}
                                                 <div>
@@ -319,68 +379,12 @@ export default async function HomePage() {
                         )}
                     </div>
 
-                    <Link href="/ministerios" className="mt-16 inline-block">
-                        <Button variant="outline" className="border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-white px-12 rounded-full h-14 font-extrabold transition-all tracking-wider">
-                            EXPLORAR TODOS OS MINISTÉRIOS
-                        </Button>
-                    </Link>
-                </div>
-            </section>
-
-            {/* Upcoming Events */}
-            <section className="py-24 bg-gray-50 border-t border-gray-100">
-                <div className="max-w-5xl mx-auto px-4">
-                    <div className="text-center mb-20">
-                        <h2 className="text-4xl font-bold text-brand-blue italic underline decoration-brand-gold decoration-4 underline-offset-8">Próximos Eventos</h2>
-                    </div>
-
-                    <div className="space-y-8">
-                        {latestEvents.length > 0 ? (
-                            latestEvents.map((event: any) => (
-                                <div key={event.id} className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 flex flex-col md:flex-row hover:shadow-xl transition-all duration-500 group">
-                                    <div className="bg-brand-blue md:w-40 p-10 flex flex-col items-center justify-center text-white text-center group-hover:bg-brand-gold transition-colors duration-500">
-                                        <Calendar className="w-8 h-8 mb-3 opacity-80" />
-                                        <span className="text-xl font-black uppercase tracking-tighter">
-                                            {event.date.includes('-')
-                                                ? new Date(event.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-                                                : event.date.split(',')[0]}
-                                        </span>
-                                    </div>
-                                    <div className="flex-1 p-8 space-y-4">
-                                        <h3 className="text-2xl font-bold text-gray-900 group-hover:text-brand-blue transition-colors">{event.title}</h3>
-                                        <div className="flex flex-wrap gap-6 text-sm">
-                                            <div className="flex items-center gap-2 text-gray-500">
-                                                <Clock className="w-5 h-5 text-brand-gold" />
-                                                <span className="font-medium">{event.time || "Horário a confirmar"}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-gray-500">
-                                                <MapPin className="w-5 h-5 text-brand-gold" />
-                                                <span className="font-medium line-clamp-1">{event.location}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="p-8 flex items-center justify-center bg-gray-50/50">
-                                        <Link href="/eventos">
-                                            <Button className="rounded-xl border-none bg-brand-blue/5 text-brand-blue hover:bg-brand-blue hover:text-white transition-all font-bold px-6 h-12">
-                                                Saber Mais
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed border-gray-200">
-                                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                                <p className="text-gray-400 italic font-medium">Fique atento! Novas programações em breve.</p>
-                            </div>
-                        )}
-                        <div className="text-center mt-16">
-                            <Link href="/eventos">
-                                <Button className="bg-brand-blue text-white px-10 h-14 rounded-2xl shadow-lg hover:shadow-brand-blue/20 transition-all font-bold">
-                                    Visualizar Calendário Completo
-                                </Button>
-                            </Link>
-                        </div>
+                    <div className="mt-16 inline-block">
+                        <Link href="/ministerios">
+                            <Button variant="outline" className="border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-white px-12 rounded-full h-14 font-extrabold transition-all tracking-wider">
+                                EXPLORAR TODOS OS MINISTÉRIOS
+                            </Button>
+                        </Link>
                     </div>
                 </div>
             </section>
