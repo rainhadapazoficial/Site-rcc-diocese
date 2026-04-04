@@ -263,7 +263,7 @@ export default function GruposClient() {
             </div>
 
             <Dialog open={!!selectedGroup} onOpenChange={(open) => !open && setSelectedGroup(null)}>
-                <DialogContent className="max-w-[95vw] w-full rounded-[2.5rem] p-0 overflow-hidden border-none max-h-[95vh] flex flex-col shadow-2xl">
+                <DialogContent className="sm:max-w-[98vw] w-full rounded-[2.5rem] p-0 overflow-hidden border-none max-h-[98vh] flex flex-col shadow-2xl">
                     {selectedGroup && (
                         <>
                             <div className="relative h-[250px] shrink-0">
