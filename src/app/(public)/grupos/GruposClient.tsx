@@ -263,25 +263,25 @@ export default function GruposClient() {
             </div>
 
             <Dialog open={!!selectedGroup} onOpenChange={(open) => !open && setSelectedGroup(null)}>
-                <DialogContent className="max-w-5xl rounded-[2.5rem] p-0 overflow-hidden border-none max-h-[90vh] flex flex-col shadow-2xl">
+                <DialogContent className="max-w-[95vw] w-full rounded-[2.5rem] p-0 overflow-hidden border-none max-h-[95vh] flex flex-col shadow-2xl">
                     {selectedGroup && (
                         <>
-                            <div className="relative h-[350px] shrink-0">
+                            <div className="relative h-[250px] shrink-0">
                                 {selectedGroup.imagem && selectedGroup.imagem.length > 10 ? (
                                     <img src={selectedGroup.imagem} alt={selectedGroup.nome} className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full bg-brand-blue flex items-center justify-center">
-                                        <Users className="w-32 h-32 text-white/10" />
+                                        <Users className="w-24 h-24 text-white/10" />
                                     </div>
                                 )}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                                <div className="absolute bottom-10 left-10 right-10">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <span className="text-[10px] font-bold text-brand-gold bg-brand-gold/20 px-4 py-1.5 rounded-full uppercase tracking-widest backdrop-blur-md border border-brand-gold/30">
+                                <div className="absolute bottom-6 left-10 right-10">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-[9px] font-bold text-brand-gold bg-brand-gold/20 px-3 py-1 rounded-full uppercase tracking-widest backdrop-blur-md border border-brand-gold/30">
                                             {selectedGroup.cidade}
                                         </span>
                                     </div>
-                                    <h2 className="text-4xl md:text-5xl font-black text-white italic tracking-tight leading-tight uppercase">{selectedGroup.nome}</h2>
+                                    <h2 className="text-3xl md:text-4xl font-black text-white italic tracking-tight leading-tight uppercase">{selectedGroup.nome}</h2>
                                 </div>
                             </div>
 
@@ -289,11 +289,11 @@ export default function GruposClient() {
                                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-10">
                                     <div className="space-y-10">
                                         <div className="space-y-6">
-                                            <h4 className="text-[10px] font-black text-brand-blue/30 uppercase tracking-[0.4em] flex items-center gap-4">
-                                                <div className="w-10 h-[1.5px] bg-brand-blue/20" />
+                                            <h4 className="text-[9px] font-black text-brand-blue/30 uppercase tracking-[0.4em] flex items-center gap-4">
+                                                <div className="w-8 h-[1.5px] bg-brand-blue/20" />
                                                 Sobre o Grupo de Oração
                                             </h4>
-                                            <p className="text-gray-600 text-xl leading-relaxed italic font-medium">
+                                            <p className="text-gray-600 text-lg leading-relaxed italic font-medium">
                                                 {selectedGroup.descricao || "Nenhuma descrição disponível."}
                                             </p>
                                         </div>
@@ -338,8 +338,8 @@ export default function GruposClient() {
                                                     <MapPin className="w-6 h-6 text-brand-blue" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] uppercase font-black text-gray-400 tracking-[0.2em] mb-1">Localização</p>
-                                                    <p className="font-bold text-brand-blue text-lg leading-tight">{selectedGroup.local}</p>
+                                                    <p className="text-[9px] uppercase font-black text-gray-400 tracking-[0.2em] mb-1">Localização</p>
+                                                    <p className="font-bold text-brand-blue text-base leading-tight">{selectedGroup.local}</p>
                                                 </div>
                                             </div>
                                             
@@ -362,8 +362,8 @@ export default function GruposClient() {
 
                                         {selectedGroup.geolocalizacao && (
                                             <a href={selectedGroup.geolocalizacao} target="_blank" rel="noopener noreferrer" className="block">
-                                                <Button className="w-full h-20 rounded-[2rem] bg-brand-gold hover:bg-yellow-500 text-brand-blue font-black gap-4 shadow-2xl transform hover:-translate-y-2 transition-all text-xl uppercase tracking-widest group">
-                                                    <MapPin className="w-8 h-8 group-hover:animate-bounce" />
+                                                <Button className="w-full h-16 rounded-[1.5rem] bg-brand-gold hover:bg-yellow-500 text-brand-blue font-black gap-3 shadow-2xl transform hover:-translate-y-1 transition-all text-lg uppercase tracking-widest group">
+                                                    <MapPin className="w-6 h-6 group-hover:animate-bounce" />
                                                     Como chegar pelo GPS
                                                 </Button>
                                             </a>
