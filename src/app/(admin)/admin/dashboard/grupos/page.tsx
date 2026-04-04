@@ -29,6 +29,7 @@ export default function GruposAdminPage() {
     const [formData, setFormData] = useState<any>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [mandatos, setMandatos] = useState<any[]>([]);
+    const [foranias, setForanias] = useState<any[]>([]);
     const [coordinatorHistory, setCoordinatorHistory] = useState<{ nome: string; gestao: string; foto_url?: string; mandato_id?: string }[]>([]);
 
     // Page Settings State
@@ -43,7 +44,16 @@ export default function GruposAdminPage() {
         fetchGroups();
         fetchPageSettings();
         fetchMandatos();
+        fetchForanias();
     }, []);
+
+    async function fetchForanias() {
+        const { data, error } = await supabase
+            .from("foranias")
+            .select("*")
+            .order("nome", { ascending: true });
+        if (data) setForanias(data);
+    }
 
     async function fetchMandatos() {
         const { data, error } = await supabase
@@ -151,6 +161,7 @@ export default function GruposAdminPage() {
             imagem: formData.imagem,
             coordenador_foto_url: formData.coordenador_foto_url,
             mandato_id: formData.mandato_id ? parseInt(formData.mandato_id) : null,
+            forania_id: formData.forania_id || null,
             slug: (formValues.get("nome") as string).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ /g, "-").replace(/[^\w-]+/g, ""),
         };
 
@@ -347,6 +358,24 @@ export default function GruposAdminPage() {
                                                     </SelectContent>
                                                 </Select>
                                             </div>
+                                            <div className="space-y-2 col-span-2">
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-[#003366]">Forania</label>
+                                                <Select
+                                                    value={formData.forania_id || ""}
+                                                    onValueChange={(v) => setFormData({ ...formData, forania_id: v })}
+                                                >
+                                                    <SelectTrigger className="rounded-xl border-gray-200">
+                                                        <SelectValue placeholder="Selecione a forania..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {foranias.map((f) => (
+                                                            <SelectItem key={f.id} value={f.id}>
+                                                                {f.nome}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
                                             <div className="space-y-2">
                                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">WhatsApp Link</label>
                                                 <Input name="whatsapp" defaultValue={editingGroup?.whatsapp} placeholder="https://wa.me/..." className="rounded-xl" />
@@ -531,9 +560,16 @@ export default function GruposAdminPage() {
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-bold text-brand-blue italic">{group.nome}</h3>
-                                    <p className="text-brand-gold font-medium text-sm flex items-center gap-1">
-                                        <MapPin className="w-3 h-3" /> {group.cidade}
-                                    </p>
+                                    <div className="flex flex-wrap gap-2 mt-1">
+                                        <p className="text-brand-gold font-medium text-xs flex items-center gap-1 bg-brand-gold/5 px-2 py-1 rounded-lg">
+                                            <MapPin className="w-3 h-3" /> {group.cidade}
+                                        </p>
+                                        {group.forania_id && (
+                                            <p className="text-brand-blue font-medium text-xs flex items-center gap-1 bg-brand-blue/5 px-2 py-1 rounded-lg">
+                                                <Globe className="w-3 h-3" /> {foranias.find(f => f.id === group.forania_id)?.nome || "Forania carregando..."}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="space-y-2 text-sm text-gray-600">
                                     <div className="flex items-center gap-2">

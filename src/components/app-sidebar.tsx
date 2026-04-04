@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Newspaper, Calendar, LayoutDashboard, Mail, LogOut, Settings, Heart, Image as ImageIcon, Monitor, Crown, Users, Flame, History, Globe, GraduationCap } from "lucide-react";
+import { Newspaper, Calendar, LayoutDashboard, Mail, LogOut, Settings, Heart, Image as ImageIcon, Monitor, Crown, Users, Flame, History, Globe, GraduationCap, MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
@@ -38,6 +38,11 @@ const data = {
             title: "Grupos de Oração",
             url: "/admin/dashboard/grupos",
             icon: Heart,
+        },
+        {
+            title: "Foranias",
+            url: "/admin/dashboard/foranias",
+            icon: MapPin,
         },
         {
             title: "Festa do Rei Jesus",
