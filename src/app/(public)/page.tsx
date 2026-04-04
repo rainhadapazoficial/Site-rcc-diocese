@@ -26,21 +26,40 @@ async function getLatestEvents() {
     return data || [];
 }
 
-async function getLatestGroups() {
+async function getGroupsByForania() {
     const { data, error } = await supabase
         .from('groups')
-        .select('id, nome, cidade, dia, local, slug');
+        .select(`
+            id, nome, cidade, dia, local, slug, forania_id,
+            foranias (
+                nome
+            )
+        `);
 
     if (error) {
-        console.error('Error fetching latest groups:', error);
-        return [];
+        console.error('Error fetching groups by forania:', error);
+        return {};
     }
 
-    if (!data) return [];
+    if (!data) return {};
 
-    // Shuffle and pick 3
-    const shuffled = [...data].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 3);
+    const grouped: Record<string, any[]> = {};
+    
+    // Group them
+    data.forEach((group: any) => {
+        const foraniaName = group.foranias?.nome || "Outras Regiões";
+        if (!grouped[foraniaName]) grouped[foraniaName] = [];
+        grouped[foraniaName].push(group);
+    });
+
+    // Shuffle each forania and limit to 4
+    Object.keys(grouped).forEach(name => {
+        grouped[name] = grouped[name]
+            .sort(() => 0.5 - Math.random())
+            .slice(0, 4);
+    });
+
+    return grouped;
 }
 
 async function getLatestMinistries() {
@@ -76,10 +95,10 @@ async function getHomeBanners() {
 }
 
 export default async function HomePage() {
-    const [latestPosts, latestEvents, latestGroups, latestMinistries, banners] = await Promise.all([
+    const [latestPosts, latestEvents, groupsByForania, latestMinistries, banners] = await Promise.all([
         getLatestPosts(),
         getLatestEvents(),
-        getLatestGroups(),
+        getGroupsByForania(),
         getLatestMinistries(),
         getHomeBanners()
     ]);
@@ -148,61 +167,78 @@ export default async function HomePage() {
             </section>
 
             {/* Grupos de Oração Section */}
-            <section className="py-24 bg-brand-blue/5 text-center border-t border-gray-100">
+            <section id="grupos" className="py-24 bg-brand-blue/5 border-t border-gray-100">
                 <div className="max-w-7xl mx-auto px-4">
-                    <div className="mb-16">
+                    <div className="text-center mb-16">
                         <h2 className="text-4xl font-bold text-brand-blue italic">Grupos de Oração</h2>
                         <p className="text-gray-600 mt-4 max-w-2xl mx-auto italic">"Onde dois ou três estiverem reunidos em meu nome, eu estou lá no meio deles." (Mt 18, 20)</p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-                        {latestGroups.length > 0 ? (
-                            latestGroups.map((group: any) => (
-                                <div key={group.id} className="bg-white p-8 rounded-[3rem] shadow-sm border border-gray-100 group hover:shadow-xl transition-all duration-500 hover:-translate-y-2">
-                                    <div className="flex items-center gap-4 mb-8">
-                                        <div className="w-16 h-16 bg-brand-blue/10 rounded-2xl flex items-center justify-center text-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-all duration-500">
-                                            <Users className="w-8 h-8" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-2xl font-bold text-brand-blue italic leading-tight">{group.nome}</h3>
-                                            <p className="text-brand-gold font-bold flex items-center gap-1 uppercase tracking-widest text-[10px] mt-1">
-                                                <MapPin className="w-3 h-3" /> {group.cidade}
-                                            </p>
-                                        </div>
+                    <div className="space-y-20">
+                        {Object.entries(groupsByForania).length > 0 ? (
+                            Object.entries(groupsByForania).map(([foraniaName, groups]) => (
+                                <div key={foraniaName} className="space-y-8 text-center md:text-left">
+                                    <div className="flex items-center justify-center md:justify-start gap-4 mb-4 border-b border-brand-blue/10 pb-4">
+                                        <div className="bg-brand-gold w-1.5 h-8 rounded-full hidden md:block" />
+                                        <h3 className="text-2xl font-bold text-brand-blue italic">{foraniaName}</h3>
                                     </div>
 
-                                    <div className="space-y-4 mb-8 text-gray-600">
-                                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl">
-                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
-                                                <Clock className="w-4 h-4 text-brand-blue" />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
+                                        {groups.map((group: any) => (
+                                            <div key={group.id} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 group hover:shadow-xl transition-all duration-500 hover:-translate-y-1 flex flex-col h-full">
+                                                <div className="flex items-center gap-3 mb-6">
+                                                    <div className="w-12 h-12 bg-brand-blue/10 rounded-2xl flex items-center justify-center text-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-all duration-500 flex-shrink-0">
+                                                        <Users className="w-6 h-6" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-lg font-bold text-brand-blue italic leading-tight line-clamp-2">{group.nome}</h4>
+                                                        <p className="text-brand-gold font-bold flex items-center gap-1 uppercase tracking-widest text-[9px] mt-1">
+                                                            <MapPin className="w-2.5 h-2.5" /> {group.cidade}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-3 mb-6 text-gray-600 flex-1">
+                                                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                                        <Clock className="w-3.5 h-3.5 text-brand-blue" />
+                                                        <span className="text-xs font-medium">{group.dia}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                                        <MapPin className="w-3.5 h-3.5 text-brand-blue" />
+                                                        <span className="text-xs font-medium line-clamp-1">{group.local}</span>
+                                                    </div>
+                                                </div>
+
+                                                <Link href="/grupos">
+                                                    <Button className="w-full rounded-xl bg-brand-blue hover:bg-brand-gold text-white transition-all h-10 text-xs font-bold shadow-md shadow-brand-blue/10">
+                                                        Ver Detalhes
+                                                    </Button>
+                                                </Link>
                                             </div>
-                                            <span className="text-sm font-medium">{group.dia}</span>
-                                        </div>
-                                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl">
-                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
-                                                <MapPin className="w-4 h-4 text-brand-blue" />
-                                            </div>
-                                            <span className="text-sm font-medium line-clamp-1">{group.local}</span>
-                                        </div>
+                                        ))}
                                     </div>
 
-                                    <Link href="/grupos" className="w-full">
-                                        <Button className="w-full rounded-2xl bg-brand-blue hover:bg-brand-gold text-white transition-all h-12 font-bold shadow-md shadow-brand-blue/10">
-                                            Ver Detalhes do Grupo
-                                        </Button>
-                                    </Link>
+                                    <div className="flex justify-center mt-6">
+                                        <Link href="/grupos">
+                                            <Button variant="outline" className="border-brand-blue/20 text-brand-blue hover:bg-brand-blue hover:text-white px-8 rounded-xl h-12 font-bold transition-all text-sm">
+                                                Ver mais grupos de {foraniaName}
+                                            </Button>
+                                        </Link>
+                                    </div>
                                 </div>
                             ))
                         ) : (
-                            <div className="col-span-3 py-12 text-gray-400 italic">Nenhum grupo cadastrado.</div>
+                            <div className="text-center py-12 text-gray-400 italic">Nenhum grupo cadastrado.</div>
                         )}
                     </div>
 
-                    <Link href="/grupos" className="mt-16 inline-block">
-                        <Button size="lg" className="bg-brand-blue text-white px-12 rounded-full h-14 shadow-xl hover:scale-105 transition-all font-bold">
-                            Encontrar Grupo Próximo
-                        </Button>
-                    </Link>
+                    <div className="mt-20 text-center">
+                        <Link href="/grupos">
+                            <Button size="lg" className="bg-brand-blue text-white px-12 rounded-full h-14 shadow-xl hover:scale-105 transition-all font-bold">
+                                Ver Todos os Grupos da Diocese
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
             </section>
 
