@@ -29,6 +29,8 @@ export default function GruposAdminPage() {
     const [editingGroup, setEditingGroup] = useState<any>(null);
     const [formData, setFormData] = useState<any>({});
     const [searchTerm, setSearchTerm] = useState("");
+    const [selectedForania, setSelectedForania] = useState<string>("all");
+    const [selectedCity, setSelectedCity] = useState<string>("all");
     const [mandatos, setMandatos] = useState<any[]>([]);
     const [foranias, setForanias] = useState<any[]>([]);
     const [coordinatorHistory, setCoordinatorHistory] = useState<{ nome: string; gestao: string; foto_url?: string; mandato_id?: string }[]>([]);
@@ -260,10 +262,29 @@ export default function GruposAdminPage() {
         setIsDialogOpen(true);
     };
 
-    const filteredGroups = groups.filter(g =>
-        g.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        g.cidade.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const cities = Array.from(new Set(groups.map(g => g.cidade))).sort();
+
+    const filteredGroups = groups.filter(g => {
+        const matchesSearch = g.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            g.cidade.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesForania = selectedForania === "all" || String(g.forania_id) === selectedForania;
+        const matchesCity = selectedCity === "all" || g.cidade === selectedCity;
+        return matchesSearch && matchesForania && matchesCity;
+    });
+
+    // Grouping logic for the list
+    const groupsByForania: Record<string, any[]> = {};
+    filteredGroups.forEach(group => {
+        const foraniaName = foranias.find(f => f.id === group.forania_id)?.nome || "Sem Forania";
+        if (!groupsByForania[foraniaName]) groupsByForania[foraniaName] = [];
+        groupsByForania[foraniaName].push(group);
+    });
+
+    const foraniaNames = Object.keys(groupsByForania).sort((a, b) => {
+        if (a === "Sem Forania") return 1;
+        if (b === "Sem Forania") return -1;
+        return a.localeCompare(b);
+    });
 
     return (
         <div className="p-8 space-y-8 animate-in fade-in duration-500">
@@ -279,12 +300,30 @@ export default function GruposAdminPage() {
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <Input
-                            placeholder="Buscar grupo ou cidade..."
+                            placeholder="Buscar grupo..."
                             className="pl-10 rounded-xl w-64"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+                    <Select value={selectedForania} onValueChange={setSelectedForania}>
+                        <SelectTrigger className="w-48 rounded-xl h-12 bg-white">
+                            <SelectValue placeholder="Todas as Foranias" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todas as Foranias</SelectItem>
+                            {foranias.map(f => <SelectItem key={f.id} value={String(f.id)}>{f.nome}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <Select value={selectedCity} onValueChange={setSelectedCity}>
+                        <SelectTrigger className="w-48 rounded-xl h-12 bg-white">
+                            <SelectValue placeholder="Todas as Cidades" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todas as Cidades</SelectItem>
+                            {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
                     <Dialog open={isDialogOpen} onOpenChange={(open) => {
                         setIsDialogOpen(open);
                         if (!open) setEditingGroup(null);
@@ -707,62 +746,85 @@ export default function GruposAdminPage() {
                 </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-12 pb-20">
                 {isLoading ? (
-                    <div className="col-span-full py-20 flex flex-col items-center justify-center text-gray-400">
+                    <div className="py-20 flex flex-col items-center justify-center text-gray-400">
                         <Loader2 className="w-12 h-12 animate-spin mb-4 text-brand-gold" />
                         <p className="font-bold italic">Carregando grupos...</p>
                     </div>
-                ) : filteredGroups.length === 0 ? (
-                    <div className="col-span-full py-20 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed rounded-[3rem]">
+                ) : foraniaNames.length === 0 ? (
+                    <div className="py-20 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed rounded-[3rem]">
                         <XCircle className="w-16 h-16 mb-4 opacity-20" />
                         <p className="text-xl font-bold italic text-brand-blue">Nenhum grupo encontrado.</p>
                     </div>
                 ) : (
-                    filteredGroups.map((group) => (
-                        <Card key={group.id} className="group overflow-hidden rounded-[2.5rem] border-none shadow-sm hover:shadow-xl transition-all bg-white p-6">
-                            <CardContent className="p-0 space-y-4">
-                                <div className="flex justify-between items-start">
-                                    <div className="p-3 bg-brand-blue/5 rounded-2xl">
-                                        <Users className="w-6 h-6 text-brand-blue" />
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Button variant="ghost" size="icon" onClick={() => openEdit(group)} className="text-gray-400 hover:text-brand-blue rounded-xl">
-                                            <Edit className="w-4 h-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => deleteGroup(group.id)} className="text-gray-400 hover:text-red-500 rounded-xl">
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-brand-blue italic">{group.nome}</h3>
-                                    <div className="flex flex-wrap gap-2 mt-1">
-                                        <p className="text-brand-gold font-medium text-xs flex items-center gap-1 bg-brand-gold/5 px-2 py-1 rounded-lg">
-                                            <MapPin className="w-3 h-3" /> {group.cidade}
-                                        </p>
-                                        {group.forania_id && (
-                                            <p className="text-brand-blue font-medium text-xs flex items-center gap-1 bg-brand-blue/5 px-2 py-1 rounded-lg">
-                                                <Globe className="w-3 h-3" /> {foranias.find(f => f.id === group.forania_id)?.nome || "Forania carregando..."}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="space-y-2 text-sm text-gray-600">
-                                    <div className="flex items-center gap-2">
-                                        <Clock className="w-4 h-4 text-brand-blue/40" />
-                                        <span>{group.dia}</span>
-                                    </div>
-                                    <div className="flex items-start gap-2">
-                                        <MapPin className="w-4 h-4 text-brand-blue/40 shrink-0 mt-0.5" />
-                                        <span>{group.local}</span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                    foraniaNames.map((foraniaName) => (
+                        <div key={foraniaName} className="space-y-6">
+                            <div className="flex items-center gap-4 px-2">
+                                <h2 className="text-xl font-black text-brand-blue italic uppercase tracking-tight flex items-center gap-3">
+                                    <div className="w-1.5 h-6 bg-brand-gold rounded-full" />
+                                    {foraniaName}
+                                </h2>
+                                <div className="h-[1px] bg-brand-blue/5 flex-1" />
+                                <span className="text-[9px] font-bold text-gray-400 bg-gray-100/50 px-3 py-1 rounded-full border border-gray-100">
+                                    {groupsByForania[foraniaName].length} {groupsByForania[foraniaName].length === 1 ? "Grupo" : "Grupos"}
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {groupsByForania[foraniaName].map((group) => (
+                                    <GroupAdminCard key={group.id} group={group} foranias={foranias} openEdit={openEdit} deleteGroup={deleteGroup} />
+                                ))}
+                            </div>
+                        </div>
                     ))
                 )}
             </div>
         </div>
+    );
+}
+
+function GroupAdminCard({ group, foranias, openEdit, deleteGroup }: any) {
+    return (
+        <Card key={group.id} className="group overflow-hidden rounded-[2.5rem] border-none shadow-sm hover:shadow-xl transition-all bg-white p-6">
+            <CardContent className="p-0 space-y-4">
+                <div className="flex justify-between items-start">
+                    <div className="p-3 bg-brand-blue/5 rounded-2xl">
+                        <Users className="w-6 h-6 text-brand-blue" />
+                    </div>
+                    <div className="flex gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(group)} className="text-gray-400 hover:text-brand-blue rounded-xl">
+                            <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => deleteGroup(group.id)} className="text-gray-400 hover:text-red-500 rounded-xl">
+                            <Trash2 className="w-4 h-4" />
+                        </Button>
+                    </div>
+                </div>
+                <div>
+                    <h3 className="text-xl font-bold text-brand-blue italic">{group.nome}</h3>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                        <p className="text-brand-gold font-medium text-xs flex items-center gap-1 bg-brand-gold/5 px-2 py-1 rounded-lg">
+                            <MapPin className="w-3 h-3" /> {group.cidade}
+                        </p>
+                        {group.forania_id && (
+                            <p className="text-brand-blue font-medium text-xs flex items-center gap-1 bg-brand-blue/5 px-2 py-1 rounded-lg">
+                                <Globe className="w-3 h-3" /> {foranias.find((f: any) => f.id === group.forania_id)?.nome || "Forania carregando..."}
+                            </p>
+                        )}
+                    </div>
+                </div>
+                <div className="space-y-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-brand-blue/40" />
+                        <span>{group.dia}</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                        <MapPin className="w-4 h-4 text-brand-blue/40 shrink-0 mt-0.5" />
+                        <span className="line-clamp-1">{group.local}</span>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
     );
 }
