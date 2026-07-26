@@ -1,0 +1,41 @@
+name: Importar Histórico de Notícias RCC Brasil
+
+on:
+  workflow_dispatch:
+    inputs:
+      pages:
+        description: 'Número de páginas para importar (cada página = 50 notícias)'
+        required: true
+        default: '5'
+      all:
+        description: 'Importar TODO o histórico (1378+ notícias)? (true/false)'
+        required: false
+        default: 'false'
+
+jobs:
+  sync-history:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar Dependências
+        run: npm install
+
+      - name: Rodar Sincronização do Histórico
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ "${{ github.event.inputs.all }}" = "true" ]; then
+            npx tsx scripts/sync-rcc-history.ts --all
+          else
+            npx tsx scripts/sync-rcc-history.ts --pages=${{ github.event.inputs.pages }}
+          fi

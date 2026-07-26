@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sync:rcc": "npx -y tsx scripts/sync-rcc.ts",
+    "sync:history": "npx -y tsx scripts/sync-rcc-history.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.3",
