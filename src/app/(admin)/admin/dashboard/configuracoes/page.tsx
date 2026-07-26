@@ -30,7 +30,7 @@ export default function ConfigPage() {
                             Conexão MCP
                         </CardTitle>
                         <CardDescription className="text-blue-100 opacity-80">
-                            Dados para conectar o Assistente de IA (Antigravity) ao site.
+                            Dados para conectar o VOZ DE PENTECOSTES ao site.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="p-8 space-y-6">
