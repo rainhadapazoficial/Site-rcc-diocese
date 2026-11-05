@@ -96,7 +96,7 @@ export default function HistoriaDiocesePage() {
                                 {data.section1.content}
                             </p>
                         </div>
-                        <div className="relative">
+                        <div className="relative h-[450px]">
                             <div className="absolute -inset-4 bg-brand-gold/10 rounded-[3rem] -rotate-3" />
                             <Image
                                 src={data.image_url}

@@ -30,6 +30,10 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'www.rccbrasil.org.br',
+      },
+      {
+        protocol: 'https',
+        hostname: '**',
       }
     ],
   },

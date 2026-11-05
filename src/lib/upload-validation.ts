@@ -13,11 +13,11 @@ export type StorageFolder =
     | "ministerios_historico"
     | "editor";
 
-export const DEFAULT_STORAGE_BUCKET = "media";
+export const DEFAULT_STORAGE_BUCKET = "rcc-imagens";
 
 export const ALLOWED_STORAGE_BUCKETS = new Set([
-    "media",
     "rcc-imagens",
+    "media",
     "galeria-fotos",
 ]);
 
