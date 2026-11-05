@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
@@ -20,12 +21,11 @@ import {
     Bold, Italic, Underline as UnderlineIcon,
     AlignLeft, AlignCenter, AlignRight,
     List, ListOrdered, Quote, Heading1,
-    ImageIcon,
+    ImageIcon, Check, X,
     Table as TableIcon, Palette, Highlighter,
     Undo, Redo, Eraser
 } from "lucide-react";
-import { uploadAdminImage } from "@/lib/storage-client";
-import { validateExternalImageUrl } from "@/lib/upload-validation";
+import { ImageUploader } from "@/components/admin/ImageUploader";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -39,128 +39,112 @@ interface PremiumEditorProps {
     onChange: (html: string) => void;
 }
 
-const MenuBar = ({ editor }: { editor: Editor | null }) => {
+const MenuBar = ({
+    editor,
+    showImagePanel,
+    setShowImagePanel,
+}: {
+    editor: Editor | null;
+    showImagePanel: boolean;
+    setShowImagePanel: (v: boolean) => void;
+}) => {
     if (!editor) return null;
 
-    const addImageFromUpload = async () => {
-        const input = document.createElement("input");
-        input.type = "file";
-        input.accept = ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp";
-        input.onchange = async () => {
-            if (input.files?.length) {
-                const file = input.files[0];
-                try {
-                    const publicUrl = await uploadAdminImage(file, "galerias");
-                    editor.chain().focus().setImage({ src: publicUrl }).run();
-                } catch (err: unknown) {
-                    const msg = err instanceof Error ? err.message : "Erro ao enviar imagem.";
-                    alert(msg);
-                }
-            }
-        };
-        input.click();
-    };
-
-    const addImageFromUrl = () => {
-        const rawUrl = window.prompt("Cole a URL da imagem (https://...):");
-        if (!rawUrl) return;
-        const validation = validateExternalImageUrl(rawUrl);
-        if (!validation.valid) {
-            alert(validation.error || "URL de imagem inválida.");
-            return;
-        }
-        editor.chain().focus().setImage({ src: validation.url }).run();
-    };
-
     return (
-        <div className="flex flex-wrap gap-1 p-2 border-b bg-gray-50/50 backdrop-blur-sm rounded-t-xl sticky top-0 z-10">
+        <div className="flex flex-wrap gap-1 p-2 border-b bg-gray-50/50 backdrop-blur-sm rounded-t-xl sticky top-0 z-10 items-center">
             {/* Text Style */}
             <div className="flex gap-1 items-center px-1">
-                <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleBold().run()}
+                <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleBold().run()}
                     className={editor.isActive("bold") ? "bg-brand-blue text-white" : "hover:bg-brand-blue/10"}>
                     <Bold className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleItalic().run()}
+                <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleItalic().run()}
                     className={editor.isActive("italic") ? "bg-brand-blue text-white" : "hover:bg-brand-blue/10"}>
                     <Italic className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleUnderline().run()}
+                <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleUnderline().run()}
                     className={editor.isActive("underline") ? "bg-brand-blue text-white" : "hover:bg-brand-blue/10"}>
                     <UnderlineIcon className="w-4 h-4" />
                 </Button>
             </div>
 
-            <div className="w-px h-6 bg-gray-200 mx-1 self-center" />
+            <div className="w-px h-6 bg-gray-200 my-auto" />
 
             {/* Alignment */}
             <div className="flex gap-1 items-center px-1">
-                <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().setTextAlign('left').run()}
-                    className={editor.isActive({ textAlign: 'left' }) ? "bg-brand-blue text-white" : "hover:bg-brand-blue/10"}>
+                <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().setTextAlign("left").run()}
+                    className={editor.isActive({ textAlign: "left" }) ? "bg-brand-blue text-white" : "hover:bg-brand-blue/10"}>
                     <AlignLeft className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().setTextAlign('center').run()}
-                    className={editor.isActive({ textAlign: 'center' }) ? "bg-brand-blue text-white" : "hover:bg-brand-blue/10"}>
+                <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().setTextAlign("center").run()}
+                    className={editor.isActive({ textAlign: "center" }) ? "bg-brand-blue text-white" : "hover:bg-brand-blue/10"}>
                     <AlignCenter className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().setTextAlign('right').run()}
-                    className={editor.isActive({ textAlign: 'right' }) ? "bg-brand-blue text-white" : "hover:bg-brand-blue/10"}>
+                <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().setTextAlign("right").run()}
+                    className={editor.isActive({ textAlign: "right" }) ? "bg-brand-blue text-white" : "hover:bg-brand-blue/10"}>
                     <AlignRight className="w-4 h-4" />
                 </Button>
             </div>
 
-            <div className="w-px h-6 bg-gray-200 mx-1 self-center" />
+            <div className="w-px h-6 bg-gray-200 my-auto" />
 
             {/* Headings */}
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="gap-2 px-3">
+                    <Button type="button" variant="ghost" size="sm" className="gap-1 font-bold text-xs">
                         <Heading1 className="w-4 h-4" />
-                        <span className="text-xs font-bold">Título</span>
+                        Título
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>H1 - Principal</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>H2 - Seção</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>H3 - Subseção</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => editor.chain().focus().setParagraph().run()}>P - Texto Comum</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
+                        Título 1 (Grande)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
+                        Título 2 (Médio)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
+                        Título 3 (Pequeno)
+                    </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            <div className="w-px h-6 bg-gray-200 mx-1 self-center" />
+            <div className="w-px h-6 bg-gray-200 my-auto" />
 
-            {/* Lists & More */}
+            {/* Lists */}
             <div className="flex gap-1 items-center px-1">
-                <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleBulletList().run()}
+                <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleBulletList().run()}
                     className={editor.isActive("bulletList") ? "bg-brand-blue text-white" : "hover:bg-brand-blue/10"}>
                     <List className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleOrderedList().run()}
                     className={editor.isActive("orderedList") ? "bg-brand-blue text-white" : "hover:bg-brand-blue/10"}>
                     <ListOrdered className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleBlockquote().run()}
                     className={editor.isActive("blockquote") ? "bg-brand-blue text-white" : "hover:bg-brand-blue/10"}>
                     <Quote className="w-4 h-4" />
                 </Button>
             </div>
 
-            <div className="w-px h-6 bg-gray-200 mx-1 self-center" />
+            <div className="w-px h-6 bg-gray-200 my-auto" />
 
-            {/* Colors & Media */}
+            {/* Rich Features */}
             <div className="flex gap-1 items-center px-1">
-                <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleHighlight().run()}
+                <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleHighlight().run()}
                     className={editor.isActive("highlight") ? "bg-brand-blue text-white" : "hover:bg-brand-blue/10"}>
                     <Highlighter className="w-4 h-4" />
                 </Button>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
+                        <Button type="button" variant="ghost" size="sm">
                             <Palette className="w-4 h-4" />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="grid grid-cols-4 p-2 gap-1">
                         {['#000000', '#004d2c', '#FFD700', '#FF0000', '#008000', '#808080'].map(color => (
                             <button
+                                type="button"
                                 key={color}
                                 className="w-6 h-6 rounded-md border"
                                 style={{ backgroundColor: color }}
@@ -170,22 +154,23 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
                         <DropdownMenuItem className="col-span-4 justify-center" onClick={() => editor.chain().focus().unsetColor().run()}>Limpar</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button type="button" variant="ghost" size="sm" title="Inserir imagem">
-                            <ImageIcon className="w-4 h-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                        <DropdownMenuItem onClick={addImageFromUpload}>
-                            Fazer Upload (JPG, PNG, WebP)
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={addImageFromUrl}>
-                            Inserir Link (URL)
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>
+
+                <Button
+                    type="button"
+                    variant={showImagePanel ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowImagePanel(!showImagePanel)}
+                    className={`gap-1.5 text-xs font-bold rounded-lg px-3 ${
+                        showImagePanel
+                            ? "bg-brand-blue text-white"
+                            : "border-brand-blue/30 text-brand-blue hover:bg-brand-blue/10"
+                    }`}
+                >
+                    <ImageIcon className="w-4 h-4 text-brand-gold" />
+                    Inserir Imagem
+                </Button>
+
+                <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>
                     <TableIcon className="w-4 h-4" />
                 </Button>
             </div>
@@ -194,13 +179,13 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
 
             {/* History */}
             <div className="flex gap-1 items-center px-1">
-                <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().undo().run()}>
+                <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().undo().run()}>
                     <Undo className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().redo().run()}>
+                <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().redo().run()}>
                     <Redo className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}>
+                <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}>
                     <Eraser className="w-4 h-4" />
                 </Button>
             </div>
@@ -209,6 +194,9 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
 };
 
 export function PremiumEditor({ content, onChange }: PremiumEditorProps) {
+    const [showImagePanel, setShowImagePanel] = useState(false);
+    const [pendingImageUrl, setPendingImageUrl] = useState("");
+
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -239,18 +227,79 @@ export function PremiumEditor({ content, onChange }: PremiumEditorProps) {
         },
         editorProps: {
             attributes: {
-                class: "prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none min-h-[400px] p-8 max-w-none prose-headings:text-brand-blue prose-p:text-gray-600 prose-img:mx-auto",
+                class: "prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none min-h-[320px] p-6 max-w-none prose-headings:text-brand-blue prose-p:text-gray-600 prose-img:mx-auto",
             },
         },
     });
 
+    const handleInsertIntoEditor = () => {
+        if (!editor || !pendingImageUrl) return;
+        editor.chain().focus().setImage({ src: pendingImageUrl }).run();
+        setPendingImageUrl("");
+        setShowImagePanel(false);
+    };
+
     return (
         <div className="border rounded-xl bg-white shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-brand-blue/20 transition-all">
-            <MenuBar editor={editor} />
+            <MenuBar
+                editor={editor}
+                showImagePanel={showImagePanel}
+                setShowImagePanel={setShowImagePanel}
+            />
+
+            {showImagePanel && (
+                <div className="p-4 bg-blue-50/40 border-b border-blue-100 space-y-3 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-brand-blue uppercase tracking-wider">
+                            Adicionar Imagem ao Corpo do Texto
+                        </span>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                                setShowImagePanel(false);
+                                setPendingImageUrl("");
+                            }}
+                            className="h-7 w-7 rounded-lg text-gray-400 hover:text-gray-600"
+                        >
+                            <X className="w-4 h-4" />
+                        </Button>
+                    </div>
+
+                    <ImageUploader
+                        value={pendingImageUrl}
+                        onChange={(url) => setPendingImageUrl(url)}
+                        folder="galerias"
+                        placeholder="https://exemplo.com/imagem-artigo.jpg"
+                        compact
+                    />
+
+                    {pendingImageUrl && (
+                        <div className="flex justify-end">
+                            <Button
+                                type="button"
+                                onClick={handleInsertIntoEditor}
+                                className="bg-brand-blue hover:bg-brand-blue/90 text-white rounded-xl h-9 px-4 text-xs font-bold gap-1.5"
+                            >
+                                <Check className="w-4 h-4 text-brand-gold" />
+                                Inserir Imagem no Texto
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            )}
+
             <EditorContent editor={editor} />
-            <div className="p-2 bg-gray-50 border-t flex justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4">
-                <span>RCC Diocese de Sinop • Editor Premium</span>
-                <span>{editor?.storage.characterCount.words()} Palavras</span>
+            <div className="px-6 py-2 bg-gray-50 border-t flex justify-between items-center text-[10px] text-gray-400 font-medium uppercase tracking-widest">
+                <div className="flex gap-4">
+                    <span>Palavras: {editor?.storage.characterCount.words() || 0}</span>
+                    <span>Caracteres: {editor?.storage.characterCount.characters() || 0}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                    Editor Ativo
+                </div>
             </div>
         </div>
     );

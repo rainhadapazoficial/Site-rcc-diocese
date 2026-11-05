@@ -148,14 +148,14 @@ export default function EventosAdminPage() {
                             Novo Evento
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-3xl rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden">
+                    <DialogContent className="max-w-3xl sm:max-w-3xl rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden">
                         <form onSubmit={handleSubmit}>
                             <DialogHeader className="bg-brand-blue text-white p-8">
                                 <DialogTitle className="text-2xl font-bold italic text-brand-gold">
                                     {editingEvent ? "Editar Evento" : "Novo Evento"}
                                 </DialogTitle>
                             </DialogHeader>
-                            <div className="p-8 space-y-6 max-h-[60vh] overflow-y-auto">
+                            <div className="p-8 space-y-6 max-h-[65vh] overflow-y-auto">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-brand-blue uppercase tracking-widest flex items-center gap-2">
                                         <Type className="w-4 h-4" /> Nome do Evento
@@ -196,20 +196,20 @@ export default function EventosAdminPage() {
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-brand-blue uppercase tracking-widest flex items-center gap-2">
-                                        <MapPin className="w-4 h-4" /> Localização
-                                    </label>
-                                    <Input
-                                        name="location"
-                                        defaultValue={editingEvent?.location}
-                                        placeholder="Ex: Matriz da Paróquia Santo Antônio"
-                                        className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
-                                        required
-                                    />
-                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-brand-blue uppercase tracking-widest flex items-center gap-2">
+                                            <MapPin className="w-4 h-4" /> Localização
+                                        </label>
+                                        <Input
+                                            name="location"
+                                            defaultValue={editingEvent?.location}
+                                            placeholder="Ex: Matriz da Paróquia Santo Antônio"
+                                            className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
+                                            required
+                                        />
+                                    </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-brand-blue uppercase tracking-widest flex items-center gap-2">
                                             <AlertCircle className="w-4 h-4" /> Categoria
@@ -222,16 +222,17 @@ export default function EventosAdminPage() {
                                             required
                                         />
                                     </div>
-                                    <div>
-                                        <ImageUploader
-                                            name="image_url"
-                                            defaultValue={editingEvent?.image_url || ""}
-                                            folder="eventos"
-                                            label="Banner / Capa do Evento"
-                                            placeholder="https://exemplo.com/banner-evento.jpg"
-                                            compact
-                                        />
-                                    </div>
+                                </div>
+
+                                <div>
+                                    <ImageUploader
+                                        name="image_url"
+                                        defaultValue={editingEvent?.image_url || ""}
+                                        folder="eventos"
+                                        label="Banner / Capa do Evento"
+                                        placeholder="https://exemplo.com/banner-evento.jpg"
+                                        compact
+                                    />
                                 </div>
 
                                 <div className="space-y-2">

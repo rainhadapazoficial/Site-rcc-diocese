@@ -193,7 +193,7 @@ export default function NoticiasAdminPage() {
                             Criar Novo Artigo
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-5xl h-[90vh] rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden flex flex-col">
+                    <DialogContent className="max-w-4xl sm:max-w-4xl h-[90vh] rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden flex flex-col">
                         <form onSubmit={handleSubmit} className="flex flex-col h-full">
                             <DialogHeader className="bg-brand-blue text-white p-6 shrink-0 flex flex-row items-center justify-between">
                                 <DialogTitle className="text-xl font-bold italic text-brand-gold flex items-center gap-2">
@@ -215,22 +215,20 @@ export default function NoticiasAdminPage() {
                                 </div>
 
                                 <TabsContent value="editor" className="flex-1 overflow-y-auto p-8 space-y-6 m-0">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Categoria</label>
-                                            <Input name="category" defaultValue={editingPost?.category} placeholder="Ex: Formação" className="rounded-xl h-11" required />
-                                        </div>
-                                        <div>
-                                            <ImageUploader
-                                                name="image_url"
-                                                defaultValue={editingPost?.image_url || ""}
-                                                folder="noticias"
-                                                label="Imagem de Capa"
-                                                placeholder="https://exemplo.com/capa-noticia.jpg"
-                                                required
-                                                compact
-                                            />
-                                        </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Categoria</label>
+                                        <Input name="category" defaultValue={editingPost?.category} placeholder="Ex: Formação" className="rounded-xl h-11" required />
+                                    </div>
+                                    <div>
+                                        <ImageUploader
+                                            name="image_url"
+                                            defaultValue={editingPost?.image_url || ""}
+                                            folder="noticias"
+                                            label="Imagem de Capa"
+                                            placeholder="https://exemplo.com/capa-noticia.jpg"
+                                            required
+                                            compact
+                                        />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Corpo do Texto</label>
