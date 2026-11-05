@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     description: "Confira o calendário diocesano, retiros e encontros da RCC em Sinop e região do Mato Grosso.",
 };
 
-export const revalidate = 60; // Revalidate every minute
+export const revalidate = 0;
 
 async function getEvents() {
     const { data, error } = await supabase
@@ -58,7 +58,7 @@ export default async function EventosPage() {
                                         <CalendarIcon className="w-8 h-8 mb-2" />
                                         <span className="text-lg font-bold leading-tight">
                                             {event.date && event.date.includes('-')
-                                                ? new Date(event.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+                                                ? new Date(event.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
                                                 : (event.date ? event.date.split(',')[0] : "A definir")}
                                         </span>
                                     </div>

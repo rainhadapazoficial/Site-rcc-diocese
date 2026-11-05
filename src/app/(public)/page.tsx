@@ -17,14 +17,120 @@ async function getLatestPosts() {
     return data || [];
 }
 
+function parseEventBadge(dateStr?: string) {
+    if (!dateStr) return { day: "--", month: "DATA" };
+    if (dateStr.includes(' a ')) {
+        const parts = dateStr.split(' a ');
+        return { day: parts[0], month: parts[1] || "" };
+    }
+    if (dateStr.includes('-')) {
+        const parts = dateStr.split('T')[0].split('-');
+        if (parts.length === 3) {
+            const dateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]), 12, 0, 0);
+            return {
+                day: String(Number(parts[2])).padStart(2, '0'),
+                month: dateObj.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').toUpperCase(),
+            };
+        }
+    }
+    return { day: dateStr.slice(0, 5), month: "DATA" };
+}
+
 async function getLatestEvents() {
-    const { data, error } = await supabase
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // 1. Buscar próximos eventos da tabela 'events'
+    const { data: upcomingEvents } = await supabase
         .from('events')
         .select('*')
+        .gte('date', todayStr)
         .order('date', { ascending: true })
-        .limit(2);
-    if (error) console.error('Error fetching latest events:', error);
-    return data || [];
+        .limit(3);
+
+    let list: any[] = (upcomingEvents || []).map((e: any) => ({
+        id: e.id,
+        title: e.title,
+        date: e.date,
+        time: e.time || "A confirmar",
+        location: e.location || "Diocese de Sinop",
+        category: e.category || "Evento Diocesano",
+        image_url: e.image_url,
+        link: `/eventos/${e.id}`,
+        isCalendar: false,
+    }));
+
+    // Se houver menos de 2 eventos futuros, preencher com os mais recentes
+    if (list.length < 2) {
+        const { data: allEvents } = await supabase
+            .from('events')
+            .select('*')
+            .order('date', { ascending: false })
+            .limit(3);
+
+        const existingIds = new Set(list.map((e: any) => e.id));
+        for (const ev of allEvents || []) {
+            if (!existingIds.has(ev.id) && list.length < 3) {
+                list.push({
+                    id: ev.id,
+                    title: ev.title,
+                    date: ev.date,
+                    time: ev.time || "A confirmar",
+                    location: ev.location || "Diocese de Sinop",
+                    category: ev.category || "Evento Diocesano",
+                    image_url: ev.image_url,
+                    link: `/eventos/${ev.id}`,
+                    isCalendar: false,
+                });
+            }
+        }
+    }
+
+    // 2. Fallback adicional do calendário diocesano se a tabela events estiver vazia
+    if (list.length === 0) {
+        const { data: cal } = await supabase
+            .from('calendario_diocesano')
+            .select('*')
+            .order('data_inicio', { ascending: false })
+            .limit(3);
+
+        list = (cal || []).map((c: any) => ({
+            id: `cal-${c.id}`,
+            title: c.titulo,
+            date: c.data_inicio,
+            time: "Programação Diocesana",
+            location: "Diocese de Sinop",
+            category: c.categoria === "diocesano" ? "Diocesano" : c.categoria === "estadual" ? "Estadual" : "Nacional",
+            image_url: null,
+            link: "/calendario",
+            isCalendar: true,
+        }));
+    }
+
+    return list;
+}
+
+async function getCalendarHighlights() {
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const { data: upcoming } = await supabase
+        .from('calendario_diocesano')
+        .select('*')
+        .gte('data_inicio', todayStr)
+        .order('data_inicio', { ascending: true })
+        .limit(4);
+
+    if (upcoming && upcoming.length > 0) {
+        return upcoming;
+    }
+
+    // Fallback: traz os 4 últimos do ano
+    const { data: latest } = await supabase
+        .from('calendario_diocesano')
+        .select('*')
+        .order('data_inicio', { ascending: false })
+        .limit(4);
+
+    return (latest || []).reverse();
 }
 
 async function getGroupsByForania() {
@@ -111,9 +217,10 @@ async function getHomeBanners() {
 }
 
 export default async function HomePage() {
-    const [latestPosts, latestEvents, groupsByForania, latestMinistries, banners] = await Promise.all([
+    const [latestPosts, latestEvents, calendarHighlights, groupsByForania, latestMinistries, banners] = await Promise.all([
         getLatestPosts(),
         getLatestEvents(),
+        getCalendarHighlights(),
         getGroupsByForania(),
         getLatestMinistries(),
         getHomeBanners()
@@ -185,11 +292,11 @@ export default async function HomePage() {
             {/* Upcoming Events / Calendário */}
             <section className="py-24 bg-gray-50 border-t border-gray-100">
                 <div className="max-w-5xl mx-auto px-4 text-center">
-                    <div className="mb-20">
+                    <div className="mb-16">
                         <h2 className="text-4xl font-bold text-brand-blue italic underline decoration-brand-gold decoration-4 underline-offset-8">Calendário Diocesano e Eventos</h2>
                     </div>
 
-                    <div className="space-y-12">
+                    <div className="space-y-10">
                         {/* Call to Action: Full Diocesan Calendar */}
                         <div className="bg-white rounded-[2.5rem] p-8 md:p-10 border-2 border-brand-gold/20 shadow-xl shadow-brand-gold/5 flex flex-col md:flex-row items-center gap-8 group hover:border-brand-gold/40 transition-all duration-500">
                             <div className="w-20 h-20 bg-brand-gold/10 rounded-[2rem] flex items-center justify-center text-brand-gold group-hover:scale-110 group-hover:bg-brand-gold group-hover:text-white transition-all duration-500">
@@ -209,50 +316,93 @@ export default async function HomePage() {
                             </Link>
                         </div>
 
-                        {/* Events from DB */}
-                        {latestEvents.length > 0 ? (
-                            <div className="space-y-8 mt-12">
-                                {latestEvents.map((event: any) => (
-                                    <div key={event.id} className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 flex flex-col md:flex-row hover:shadow-xl transition-all duration-500 group">
-                                        <div className="bg-brand-blue md:w-40 p-10 flex flex-col items-center justify-center text-white text-center group-hover:bg-brand-gold transition-colors duration-500">
-                                            <Calendar className="w-8 h-8 mb-3 opacity-80" />
-                                            <span className="text-xl font-black uppercase tracking-tighter">
-                                                {event.date && event.date.includes('-')
-                                                    ? new Date(event.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-                                                    : (event.date ? event.date.split(',')[0] : "A definir")}
-                                            </span>
-                                        </div>
-                                        <div className="flex-1 p-8 space-y-4 text-left">
-                                            <h3 className="text-2xl font-bold text-gray-900 group-hover:text-brand-blue transition-colors">{event.title}</h3>
-                                            <div className="flex flex-wrap gap-6 text-sm">
-                                                <div className="flex items-center gap-2 text-gray-500">
-                                                    <Clock className="w-5 h-5 text-brand-gold" />
-                                                    <span className="font-medium">{event.time || "Horário a confirmar"}</span>
+                        {/* Events List Cards */}
+                        {latestEvents.length > 0 && (
+                            <div className="space-y-6 mt-8">
+                                {latestEvents.map((event: any) => {
+                                    const badge = parseEventBadge(event.date);
+                                    return (
+                                        <div key={event.id} className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 flex flex-col md:flex-row hover:shadow-xl transition-all duration-500 group">
+                                            <div className="bg-brand-blue md:w-44 p-8 flex flex-col items-center justify-center text-white text-center group-hover:bg-brand-gold transition-colors duration-500 shrink-0">
+                                                <Calendar className="w-7 h-7 mb-2 opacity-80" />
+                                                <span className="text-3xl font-black uppercase tracking-tight">
+                                                    {badge.day}
+                                                </span>
+                                                <span className="text-xs font-bold uppercase tracking-widest text-brand-gold group-hover:text-white">
+                                                    {badge.month}
+                                                </span>
+                                            </div>
+                                            <div className="flex-1 p-8 space-y-3 text-left">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="bg-brand-gold/10 text-brand-blue text-[10px] font-bold uppercase px-3 py-1 rounded-full border border-brand-gold/20">
+                                                        {event.category || "Evento Diocesano"}
+                                                    </span>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-gray-500">
-                                                    <MapPin className="w-5 h-5 text-brand-gold" />
-                                                    <span className="font-medium line-clamp-1">{event.location}</span>
+                                                <h3 className="text-2xl font-bold text-gray-900 group-hover:text-brand-blue transition-colors line-clamp-2">
+                                                    {event.title}
+                                                </h3>
+                                                <div className="flex flex-wrap gap-6 text-sm">
+                                                    <div className="flex items-center gap-2 text-gray-500">
+                                                        <Clock className="w-4 h-4 text-brand-gold" />
+                                                        <span className="font-medium">{event.time || "Horário a confirmar"}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-gray-500">
+                                                        <MapPin className="w-4 h-4 text-brand-gold" />
+                                                        <span className="font-medium line-clamp-1">{event.location || "Diocese de Sinop"}</span>
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <div className="p-8 flex items-center justify-center bg-gray-50/50 shrink-0">
+                                                <Link href={event.link || `/eventos/${event.id}`}>
+                                                    <Button className="rounded-xl border-none bg-brand-blue text-white hover:bg-brand-gold transition-all font-bold px-6 h-12 shadow-md">
+                                                        Saber Mais
+                                                    </Button>
+                                                </Link>
+                                            </div>
                                         </div>
-                                        <div className="p-8 flex items-center justify-center bg-gray-50/50">
-                                            <Link href="/eventos">
-                                                <Button className="rounded-xl border-none bg-brand-blue/5 text-brand-blue hover:bg-brand-blue hover:text-white transition-all font-bold px-6 h-12">
-                                                    Saber Mais
-                                                </Button>
-                                            </Link>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-20 bg-white/50 rounded-[3rem] border border-dashed border-gray-200 mt-12">
-                                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                                <p className="text-gray-400 italic font-medium">Outros eventos diocesanos em breve.</p>
+                                    );
+                                })}
                             </div>
                         )}
 
-                        <div className="text-center mt-16">
+                        {/* Próximas Datas do Calendário Diocesano Preview */}
+                        {calendarHighlights && calendarHighlights.length > 0 && (
+                            <div className="mt-12 pt-10 border-t border-gray-200/80 text-left">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2">
+                                    <h4 className="text-lg font-bold text-brand-blue italic flex items-center gap-2">
+                                        <Calendar className="w-5 h-5 text-brand-gold" />
+                                        Destaques da Agenda Diocesana 2026
+                                    </h4>
+                                    <Link href="/calendario" className="text-xs font-bold text-brand-blue hover:text-brand-gold uppercase tracking-widest flex items-center gap-1">
+                                        Ver calendário completo ({calendarHighlights.length > 0 ? "22 encontros" : "ver mais"}) <ChevronRight className="w-4 h-4" />
+                                    </Link>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                                    {calendarHighlights.map((cal: any) => {
+                                        const b = parseEventBadge(cal.data_inicio);
+                                        return (
+                                            <Link key={cal.id} href="/calendario" className="group bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-brand-gold/30 transition-all flex flex-col justify-between">
+                                                <div>
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <span className="text-xs font-black text-brand-blue bg-brand-blue/10 px-2.5 py-1 rounded-lg">
+                                                            {b.day} {b.month}
+                                                        </span>
+                                                        <span className="text-[10px] font-bold uppercase text-gray-400">
+                                                            {cal.categoria}
+                                                        </span>
+                                                    </div>
+                                                    <p className="font-bold text-gray-900 text-sm line-clamp-2 group-hover:text-brand-blue transition-colors">
+                                                        {cal.titulo}
+                                                    </p>
+                                                </div>
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="text-center pt-8">
                             <Link href="/eventos">
                                 <Button variant="outline" className="border-brand-blue text-brand-blue hover:bg-brand-blue hover:text-white px-10 h-14 rounded-2xl transition-all font-black text-lg">
                                     Ver Agenda de Eventos
