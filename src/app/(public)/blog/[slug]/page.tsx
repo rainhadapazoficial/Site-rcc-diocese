@@ -6,7 +6,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 
-export const revalidate = 60;
+export const revalidate = 0;
 
 async function getPost(slugOrId: string) {
     // Try to find by slug

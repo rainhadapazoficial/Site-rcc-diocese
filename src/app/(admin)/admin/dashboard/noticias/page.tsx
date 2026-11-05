@@ -21,6 +21,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { shareToSocialMedia } from "@/lib/n8n";
 import { Switch } from "@/components/ui/switch";
 
+function getTodayIsoDate(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+function normalizeToIsoDate(raw?: string | null): string {
+    if (!raw) return getTodayIsoDate();
+    const trimmed = raw.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
+        const [d, m, y] = trimmed.split("/");
+        return `${y}-${m}-${d}`;
+    }
+    return getTodayIsoDate();
+}
+
 export default function NoticiasAdminPage() {
     const [posts, setPosts] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -29,9 +48,11 @@ export default function NoticiasAdminPage() {
     const [editingPost, setEditingPost] = useState<any>(null);
     const [editorContent, setEditorContent] = useState("");
 
-    // SEO Simulation States
+    // SEO & Content States
     const [seoTitle, setSeoTitle] = useState("");
     const [seoExcerpt, setSeoExcerpt] = useState("");
+    const [postCategory, setPostCategory] = useState("");
+    const [postDate, setPostDate] = useState(getTodayIsoDate());
     const [isGeneratingAI, setIsGeneratingAI] = useState(false);
     const [shareTon8n, setShareTon8n] = useState(true);
 
@@ -44,7 +65,8 @@ export default function NoticiasAdminPage() {
         const { data, error } = await supabase
             .from("posts")
             .select("*")
-            .order("date", { ascending: false });
+            .order("date", { ascending: false })
+            .order("id", { ascending: false });
 
         if (error) console.error("Error fetching posts:", error);
         else setPosts(data || []);
@@ -61,39 +83,66 @@ export default function NoticiasAdminPage() {
         // Análise Avançada de SEO e Conteúdo
         setTimeout(() => {
             const stripped = editorContent.replace(/<[^>]*>?/gm, '');
-            const keywords = ["RCC", "Diocese de Sinop", "Formação", "Fé", "Espírito Santo"];
 
-            // Sugestão de Título Otimizado
-            const titleOptions = [
-                `Formação: ${stripped.slice(0, 40)}...`,
-                `Novidades RCC Sinop: ${stripped.slice(0, 35)}...`,
-                `${stripped.slice(0, 45)} | RCC Diocese de Sinop`
-            ];
-
-            setSeoTitle(titleOptions[Math.floor(Math.random() * titleOptions.length)]);
+            // Sugestão de Título Otimizado (se ainda não tiver título definido)
+            if (!seoTitle.trim()) {
+                const titleOptions = [
+                    `Formação: ${stripped.slice(0, 40)}...`,
+                    `Novidades RCC Sinop: ${stripped.slice(0, 35)}...`,
+                    `${stripped.slice(0, 45)} | RCC Diocese de Sinop`
+                ];
+                setSeoTitle(titleOptions[Math.floor(Math.random() * titleOptions.length)]);
+            }
 
             // Sugestão de Meta Description (SEO Ativo)
             const metaDescription = `${stripped.slice(0, 155).trim()}... Leia mais sobre as novidades da Renovação Carismática na Diocese de Sinop.`;
             setSeoExcerpt(metaDescription);
 
             setIsGeneratingAI(false);
-        }, 1200);
+        }, 800);
     };
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        setIsSubmitting(true);
 
         const formData = new FormData(e.currentTarget);
+        const finalTitle = (seoTitle || (formData.get("title") as string) || "").trim();
+        const plainBody = editorContent.replace(/<[^>]*>?/gm, " ").replace(/\s+/g, " ").trim();
+        const finalExcerpt = (
+            seoExcerpt ||
+            (formData.get("excerpt") as string) ||
+            (plainBody ? `${plainBody.slice(0, 160)}...` : finalTitle)
+        ).trim();
+        const finalCategory = (postCategory || (formData.get("category") as string) || "Notícias").trim();
+        const finalImageUrl = ((formData.get("image_url") as string) || editingPost?.image_url || "").trim();
+        const finalDate = normalizeToIsoDate(postDate || (formData.get("date") as string) || editingPost?.date);
+
+        if (!finalTitle) {
+            alert("Informe o título do artigo antes de publicar.");
+            return;
+        }
+
+        if (!finalImageUrl) {
+            alert("Selecione ou insira a Imagem de Capa antes de publicar.");
+            return;
+        }
+
+        setIsSubmitting(true);
+
         const postData = {
-            title: seoTitle || formData.get("title"),
-            excerpt: seoExcerpt || formData.get("excerpt"),
+            title: finalTitle,
+            excerpt: finalExcerpt,
             content: editorContent,
-            category: formData.get("category"),
-            image_url: formData.get("image_url"),
-            author: "Admin",
-            slug: (seoTitle || formData.get("title") as string).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ /g, "-").replace(/[^\w-]+/g, ""),
-            date: new Date().toLocaleDateString("pt-BR"),
+            category: finalCategory,
+            image_url: finalImageUrl,
+            author: editingPost?.author || "RCC Diocese de Sinop",
+            slug: finalTitle
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, ""),
+            date: finalDate,
         };
 
         let result;
@@ -111,13 +160,15 @@ export default function NoticiasAdminPage() {
             setEditorContent("");
             setSeoTitle("");
             setSeoExcerpt("");
+            setPostCategory("");
+            setPostDate(getTodayIsoDate());
             fetchPosts();
 
             if (shareTon8n) {
                 shareToSocialMedia({
                     title: postData.title as string,
                     excerpt: postData.excerpt as string,
-                    url: `https://site-rcc-diocese.vercel.app/blog/${postData.slug}`,
+                    url: `https://rccdesinop.com.br/blog/${postData.slug}`,
                     image_url: postData.image_url as string,
                     category: postData.category as string,
                 });
@@ -162,9 +213,11 @@ export default function NoticiasAdminPage() {
 
     const openEdit = (post: any) => {
         setEditingPost(post);
-        setEditorContent(post.content);
-        setSeoTitle(post.title);
-        setSeoExcerpt(post.excerpt);
+        setEditorContent(post.content || "");
+        setSeoTitle(post.title || "");
+        setSeoExcerpt(post.excerpt || "");
+        setPostCategory(post.category || "");
+        setPostDate(normalizeToIsoDate(post.date));
         setIsDialogOpen(true);
     };
 
@@ -185,6 +238,8 @@ export default function NoticiasAdminPage() {
                         setEditorContent("");
                         setSeoTitle("");
                         setSeoExcerpt("");
+                        setPostCategory("");
+                        setPostDate(getTodayIsoDate());
                     }
                 }}>
                     <DialogTrigger asChild>
@@ -216,8 +271,39 @@ export default function NoticiasAdminPage() {
 
                                 <TabsContent value="editor" className="flex-1 overflow-y-auto p-8 space-y-6 m-0">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Categoria</label>
-                                        <Input name="category" defaultValue={editingPost?.category} placeholder="Ex: Formação" className="rounded-xl h-11" required />
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Título do Artigo *</label>
+                                        <Input
+                                            name="title"
+                                            value={seoTitle}
+                                            onChange={e => setSeoTitle(e.target.value)}
+                                            placeholder="Ex: Congresso Diocesano de Cura e Libertação reúne fiéis em Sinop"
+                                            className="rounded-xl h-12 text-base font-bold"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Categoria *</label>
+                                            <Input
+                                                name="category"
+                                                value={postCategory}
+                                                onChange={e => setPostCategory(e.target.value)}
+                                                placeholder="Ex: Formação, Festa do Rei Jesus..."
+                                                className="rounded-xl h-11"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Data da Publicação</label>
+                                            <Input
+                                                name="date"
+                                                type="date"
+                                                value={postDate}
+                                                onChange={e => setPostDate(e.target.value)}
+                                                className="rounded-xl h-11"
+                                                required
+                                            />
+                                        </div>
                                     </div>
                                     <div>
                                         <ImageUploader
@@ -258,23 +344,21 @@ export default function NoticiasAdminPage() {
                                             <div className="space-y-2">
                                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Meta Título (SEO)</label>
                                                 <Input
-                                                    name="title"
+                                                    name="seo_title"
                                                     value={seoTitle}
                                                     onChange={e => setSeoTitle(e.target.value)}
                                                     placeholder="Título otimizado"
                                                     className="rounded-xl py-6 text-lg font-bold"
-                                                    required
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Meta Descrição (Snippet)</label>
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Meta Descrição (Snippet — opcional, gerado automaticamente se vazio)</label>
                                                 <textarea
                                                     name="excerpt"
                                                     value={seoExcerpt}
                                                     onChange={e => setSeoExcerpt(e.target.value)}
-                                                    placeholder="Resumo que aparece no Google"
+                                                    placeholder="Resumo que aparece no Google (se deixado em branco, será gerado automaticamente a partir do texto)"
                                                     className="w-full min-h-[100px] p-4 rounded-xl border-gray-200 bg-gray-50 text-sm"
-                                                    required
                                                 />
                                             </div>
                                         </div>

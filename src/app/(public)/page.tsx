@@ -11,6 +11,7 @@ async function getLatestPosts() {
         .from('posts')
         .select('*')
         .order('date', { ascending: false })
+        .order('id', { ascending: false })
         .limit(3);
     if (error) console.error('Error fetching latest posts:', error);
     return data || [];

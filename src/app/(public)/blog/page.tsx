@@ -7,13 +7,14 @@ export const metadata: Metadata = {
     description: "Acompanhe as últimas notícias, formações e eventos da Renovação Carismática Católica no Mato Grosso.",
 };
 
-export const revalidate = 60; // Revalidate every minute
+export const revalidate = 0;
 
 async function getPosts() {
     const { data, error } = await supabase
         .from('posts')
         .select('*')
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .order('id', { ascending: false });
 
     if (error) {
         console.error("Error fetching posts:", error);

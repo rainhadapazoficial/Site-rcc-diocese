@@ -74,7 +74,9 @@ export function BlogListClient({ posts }: { posts: BlogPost[] }) {
                                 <span className="flex items-center gap-1">
                                     <Calendar className="w-3 h-3" />{" "}
                                     {post.date
-                                        ? new Date(post.date + "T12:00:00").toLocaleDateString("pt-BR")
+                                        ? (/^\d{2}\/\d{2}\/\d{4}$/.test(post.date)
+                                            ? post.date
+                                            : new Date(post.date + "T12:00:00").toLocaleDateString("pt-BR"))
                                         : new Date(post.created_at).toLocaleDateString("pt-BR")}
                                 </span>
                                 <span className="flex items-center gap-1">
