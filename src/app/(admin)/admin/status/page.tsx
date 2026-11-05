@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Database, Mail, Zap, RefreshCw } from "lucide-react";
+import AuthGuard from "@/components/admin/AuthGuard";
 
 async function checkSupabase() {
     try {
@@ -49,6 +50,7 @@ export default async function StatusPage() {
     const syncLogs = await getSyncLogs();
 
     return (
+        <AuthGuard>
         <div className="p-8 bg-slate-50 min-h-screen">
             <div className="max-w-4xl mx-auto space-y-8">
                 <div className="flex items-center justify-between border-b pb-4">
@@ -205,5 +207,6 @@ export default async function StatusPage() {
                 </div>
             </div>
         </div>
+        </AuthGuard>
     );
 }

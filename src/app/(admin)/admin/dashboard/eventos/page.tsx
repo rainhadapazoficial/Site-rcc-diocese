@@ -30,6 +30,8 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { PremiumEditor } from "@/components/admin/PremiumEditor";
+import { ImageUploader } from "@/components/admin/ImageUploader";
+import { deleteAdminStorageImage } from "@/lib/storage-client";
 
 export default function EventosAdminPage() {
     const [events, setEvents] = useState<any[]>([]);
@@ -97,20 +99,12 @@ export default function EventosAdminPage() {
         if (!confirm(`Confirmar exclusão definitiva do evento: "${event.title}"?`)) return;
 
         try {
-            // 1. Limpeza de imagem no Storage (Tentativa Segura)
-            try {
-                if (event.image_url && event.image_url.includes("supabase.co/storage/v1/object/public/")) {
-                    const urlParts = event.image_url.split("/public/")[1];
-                    const bucketName = urlParts.split("/")[0];
-                    const filePath = urlParts.split("/").slice(1).join("/");
-
-                    if (bucketName && filePath) {
-                        console.log(`[STORAGE] Removendo banner: ${bucketName}/${filePath}`);
-                        await supabase.storage.from(bucketName).remove([filePath]);
-                    }
-                }
-            } catch (storageErr) {
-                console.warn("[STORAGE_WARN] Falha ao apagar imagem, mas prosseguindo com exclusão do evento:", storageErr);
+            // 1. Limpeza de imagem no Storage (Com proteção contra exclusão de imagem em uso)
+            if (event.image_url) {
+                await deleteAdminStorageImage(event.image_url, {
+                    excludeTable: "events",
+                    excludeId: event.id,
+                });
             }
 
             // 2. Deletar no banco
@@ -215,7 +209,7 @@ export default function EventosAdminPage() {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-brand-blue uppercase tracking-widest flex items-center gap-2">
                                             <AlertCircle className="w-4 h-4" /> Categoria
@@ -228,15 +222,14 @@ export default function EventosAdminPage() {
                                             required
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-brand-blue uppercase tracking-widest flex items-center gap-2">
-                                            <ImageIcon className="w-4 h-4" /> URL da Imagem
-                                        </label>
-                                        <Input
+                                    <div>
+                                        <ImageUploader
                                             name="image_url"
-                                            defaultValue={editingEvent?.image_url}
-                                            placeholder="Banner do evento"
-                                            className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
+                                            defaultValue={editingEvent?.image_url || ""}
+                                            folder="eventos"
+                                            label="Banner / Capa do Evento"
+                                            placeholder="https://exemplo.com/banner-evento.jpg"
+                                            compact
                                         />
                                     </div>
                                 </div>
@@ -292,7 +285,7 @@ export default function EventosAdminPage() {
                         <Card key={event.id} className="group overflow-hidden rounded-[2rem] border-none shadow-sm hover:shadow-2xl transition-all duration-500">
                             <div className="relative h-40 bg-brand-blue/5 overflow-hidden">
                                 {event.image_url ? (
-                                    <img src={event.image_url} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                    <img src={event.image_url} alt={event.title || "Evento"} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-brand-blue/20">
                                         <Calendar className="w-20 h-20" />

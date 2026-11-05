@@ -18,15 +18,22 @@ END $$;
 -- 3. Habilita RLS novamente
 ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
 
--- 4. Cria política de acesso total para TODOS os papéis (incluindo o robô do GitHub)
-CREATE POLICY "Unrestricted Access to Posts" 
+-- 4. Cria política de leitura pública e escrita restrita a autenticados
+CREATE POLICY "Public Read Posts"
+ON public.posts
+FOR SELECT
+TO anon, authenticated
+USING (true);
+
+CREATE POLICY "Authenticated Manage Posts" 
 ON public.posts 
 FOR ALL 
-USING (true) 
-WITH CHECK (true);
+TO authenticated
+USING (auth.role() = 'authenticated') 
+WITH CHECK (auth.role() = 'authenticated');
 
--- 5. Garante que os logs também funcionem
-ALTER TABLE public.sync_logs DISABLE ROW LEVEL SECURITY;
+-- 5. Garante que os logs sejam restritos a administradores autenticados
 ALTER TABLE public.sync_logs ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Logs All Access Authenticated" ON public.sync_logs;
-CREATE POLICY "Unrestricted Access to Logs" ON public.sync_logs FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Unrestricted Access to Logs" ON public.sync_logs;
+CREATE POLICY "Authenticated Access to Logs" ON public.sync_logs FOR ALL TO authenticated USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');

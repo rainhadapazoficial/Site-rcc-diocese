@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import parse from "html-react-parser";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { Calendar, User, ArrowLeft, Tag } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -9,7 +10,7 @@ export const revalidate = 60;
 
 async function getPost(slugOrId: string) {
     // Try to find by slug
-    let { data, error } = await supabase
+    const { data, error } = await supabase
         .from('posts')
         .select('*')
         .eq('slug', slugOrId)
@@ -114,7 +115,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                     {/* Main Body */}
                     <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl prose-blue max-w-none prose-headings:text-brand-blue prose-headings:italic prose-a:text-brand-gold prose-img:rounded-3xl prose-img:shadow-2xl">
                         {typeof post.content === 'string' && post.content.startsWith('<')
-                            ? parse(post.content)
+                            ? parse(sanitizeHtml(post.content))
                             : <p className="whitespace-pre-wrap">{post.content}</p>
                         }
                     </div>

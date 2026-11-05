@@ -1,17 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Copy, Eye, EyeOff, CheckCircle2, Save, Loader2, Zap } from "lucide-react";
-import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 interface ConfigClientProps {
     mcpUrl: string;
-    mcpToken: string;
+    mcpToken?: string;
 }
 
-export function ConfigClient({ mcpUrl, mcpToken }: ConfigClientProps) {
+export function ConfigClient({ mcpUrl, mcpToken: initialMcpToken }: ConfigClientProps) {
+    const [mcpToken, setMcpToken] = useState(initialMcpToken || "Não configurado");
     const [showToken, setShowToken] = useState(false);
     const [copiedUrl, setCopiedUrl] = useState(false);
     const [copiedToken, setCopiedToken] = useState(false);
@@ -20,29 +21,45 @@ export function ConfigClient({ mcpUrl, mcpToken }: ConfigClientProps) {
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
+        async function fetchSettings() {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const headers: Record<string, string> = {};
+                if (session?.access_token) {
+                    headers["Authorization"] = `Bearer ${session.access_token}`;
+                }
+                const res = await fetch('/api/admin/settings', { headers });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.n8n_webhook_url) setN8nUrl(data.n8n_webhook_url);
+                if (data.n8n_api_key) setN8nKey(data.n8n_api_key);
+                if (data.mcp_token) setMcpToken(data.mcp_token);
+            } catch (e) {
+                console.error("Erro ao carregar configurações:", e);
+            }
+        }
         fetchSettings();
     }, []);
-
-    async function fetchSettings() {
-        try {
-            const res = await fetch('/api/admin/settings');
-            const data = await res.json();
-            if (data.n8n_webhook_url) setN8nUrl(data.n8n_webhook_url);
-            if (data.n8n_api_key) setN8nKey(data.n8n_api_key);
-        } catch (e) {
-            console.error("Erro ao carregar configurações:", e);
-        }
-    }
 
     async function saveSetting(key: string, value: string) {
         setIsSaving(true);
         try {
-            await fetch('/api/admin/settings', {
+            const { data: { session } } = await supabase.auth.getSession();
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (session?.access_token) {
+                headers["Authorization"] = `Bearer ${session.access_token}`;
+            }
+            const res = await fetch('/api/admin/settings', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ key, value })
             });
-            alert("Configuração salva com sucesso!");
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                alert(err.error || "Erro ao salvar configuração.");
+            } else {
+                alert("Configuração salva com sucesso!");
+            }
         } catch (e) {
             console.error("Erro ao salvar:", e);
             alert("Erro ao salvar configuração.");

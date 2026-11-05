@@ -1,11 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { Quote, Shield, Target, Heart, Loader2 } from "lucide-react";
 
+type QuemSomosContent = {
+    hero: { title: string; subtitle: string; image_url: string };
+    history: { badge: string; title: string; p1: string; p2: string; p3: string; quote: string; image_url: string };
+    mission: { title: string; text: string };
+    vision: { title: string; text: string };
+    values: { title: string; text: string };
+};
+
 export default function QuemSomosPage() {
-    const [content, setContent] = useState<any>(null);
+    const [content, setContent] = useState<QuemSomosContent | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -88,10 +97,11 @@ export default function QuemSomosPage() {
                     <div className="relative group">
                         <div className="absolute -inset-4 bg-brand-gold/20 rounded-[3rem] blur-2xl group-hover:bg-brand-gold/30 transition-all duration-500" />
                         <div className="relative h-[600px] bg-gray-200 rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
-                            <img
+                            <Image
                                 src={data.history.image_url}
                                 alt="Comunidade em Oração"
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
+                                fill
+                                className="object-cover group-hover:scale-105 transition-transform duration-1000"
                             />
                         </div>
                     </div>

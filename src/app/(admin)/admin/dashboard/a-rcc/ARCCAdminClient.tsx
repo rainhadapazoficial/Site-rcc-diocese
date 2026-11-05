@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, Loader2, CheckCircle2, AlertCircle, LayoutDashboard } from "lucide-react";
+import { ImageUploader } from "@/components/admin/ImageUploader";
 
 interface ARCCAdminClientProps {
     initialData: any;
@@ -111,14 +112,13 @@ export function ARCCAdminClient({ initialData }: ARCCAdminClientProps) {
                                 className="rounded-xl min-h-[80px]"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label>URL da Imagem de Fundo</Label>
-                            <Input
-                                value={formData.hero.image_url}
-                                onChange={(e) => setFormData({ ...formData, hero: { ...formData.hero, image_url: e.target.value } })}
-                                className="rounded-xl"
-                            />
-                        </div>
+                        <ImageUploader
+                            label="Imagem de Fundo (Hero)"
+                            value={formData.hero.image_url || ""}
+                            onChange={(url) => setFormData({ ...formData, hero: { ...formData.hero, image_url: url } })}
+                            folder="banners"
+                            aspectRatio="banner"
+                        />
                     </CardContent>
                 </Card>
 
@@ -168,14 +168,12 @@ export function ARCCAdminClient({ initialData }: ARCCAdminClientProps) {
                                 className="rounded-xl"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label>URL da Imagem Lateral</Label>
-                            <Input
-                                value={formData.baptism.image_url}
-                                onChange={(e) => setFormData({ ...formData, baptism: { ...formData.baptism, image_url: e.target.value } })}
-                                className="rounded-xl"
-                            />
-                        </div>
+                        <ImageUploader
+                            label="Imagem Lateral (Batismo no Espírito Santo)"
+                            value={formData.baptism.image_url || ""}
+                            onChange={(url) => setFormData({ ...formData, baptism: { ...formData.baptism, image_url: url } })}
+                            folder="galerias"
+                        />
                     </CardContent>
                 </Card>
             </div>

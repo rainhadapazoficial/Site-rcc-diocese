@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import { sanitizeHtml } from '../src/lib/sanitize';
 
 dotenv.config();
 
@@ -69,26 +70,46 @@ async function syncHistoricalRCCNews() {
                 break;
             }
 
+            // Mapeia todos os slugs para evitar queries N+1
+            const postSlugs = posts.map(p => p.slug).filter(Boolean);
+            
+            const { data: existingPosts, error: selectError } = await supabase
+                .from('posts')
+                .select('slug')
+                .in('slug', postSlugs);
+                
+            if (selectError) {
+                console.error(`❌ Erro ao consultar slugs existentes na página ${page}:`, selectError.message);
+                continue; // Pula esta página em vez de abortar o script
+            }
+
+            const existingSlugs = new Set(existingPosts?.map(p => p.slug) || []);
+            const postsToInsert: any[] = [];
+
             for (const item of posts) {
                 totalChecked++;
-                const title = decodeHTMLEntities(stripHTML(item.title?.rendered || ''));
                 const slug = item.slug || '';
+                
+                // Se não tem slug ou já existe no banco, ignora
+                if (!slug || existingSlugs.has(slug)) {
+                    continue;
+                }
+
+                const title = decodeHTMLEntities(stripHTML(item.title?.rendered || ''));
                 const content = item.content?.rendered || '';
                 const excerptRaw = item.excerpt?.rendered || content;
                 const pubDate = item.date ? new Date(item.date) : new Date();
 
-                if (!slug) continue;
-
-                // Try to find image in content
+                // Busca a primeira imagem no conteúdo (Regex ajustado para aceitar qualquer SRC, mesmo com query params)
                 let image_url = 'https://rccbrasil.org.br/wp-content/uploads/2021/04/logo-rcc-brasil.png';
-                const imgMatch = content.match(/<img[^>]*src=["'](https?:\/\/[^"'>]+\.(?:jpg|jpeg|png|webp))["']/i);
+                const imgMatch = content.match(/<img[^>]*src=["']([^"'>]+)["']/i);
                 if (imgMatch) {
                     image_url = imgMatch[1];
                 }
 
-                const postData = {
+                postsToInsert.push({
                     title,
-                    content,
+                    content: sanitizeHtml(content),
                     excerpt: decodeHTMLEntities(stripHTML(excerptRaw)).slice(0, 200) + '...',
                     slug,
                     category: 'RCC Brasil',
@@ -96,28 +117,25 @@ async function syncHistoricalRCCNews() {
                     date: pubDate.toISOString().split('T')[0],
                     image_url,
                     created_at: pubDate.toISOString()
-                };
-
-                // Check if post already exists
-                const { data: existingPost } = await supabase
-                    .from('posts')
-                    .select('id')
-                    .eq('slug', slug)
-                    .single();
-
-                if (!existingPost) {
-                    const { error: insertError } = await supabase
-                        .from('posts')
-                        .insert([postData]);
-
-                    if (insertError) {
-                        console.error(`❌ Erro ao inserir "${title}":`, insertError.message);
-                    } else {
-                        console.log(`✅ [Importado] (${pubDate.toISOString().split('T')[0]}) ${title}`);
-                        entriesSynced++;
-                    }
-                }
+                });
             }
+
+            // Realiza inserção em lote (Bulk Insert)
+            if (postsToInsert.length > 0) {
+                const { error: insertError } = await supabase
+                    .from('posts')
+                    .insert(postsToInsert);
+
+                if (insertError) {
+                    console.error(`❌ Erro ao inserir lote na página ${page}:`, insertError.message);
+                } else {
+                    console.log(`✅ [Importados] ${postsToInsert.length} novos posts nesta página.`);
+                    entriesSynced += postsToInsert.length;
+                }
+            } else {
+                console.log(`ℹ️ Todos os ${posts.length} posts da página ${page} já existem no banco.`);
+            }
+
         } catch (err: any) {
             console.error(`❌ Erro de conexão na página ${page}:`, err.message);
             break;

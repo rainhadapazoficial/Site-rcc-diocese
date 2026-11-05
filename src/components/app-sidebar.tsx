@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { Newspaper, Calendar, LayoutDashboard, Mail, LogOut, Settings, Heart, Image as ImageIcon, Monitor, Crown, Users, Flame, History, Globe, GraduationCap, MapPin, Database } from "lucide-react";
+import { Newspaper, Calendar, LayoutDashboard, LogOut, Settings, Heart, Monitor, Crown, Users, Flame, History, Globe, GraduationCap, MapPin, ShieldCheck, MessageSquareHeart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import Image from "next/image";
 
 import {
     Sidebar,
@@ -28,6 +29,16 @@ const data = {
             title: "Notícias",
             url: "/admin/dashboard/noticias",
             icon: Newspaper,
+        },
+        {
+            title: "Eventos",
+            url: "/admin/dashboard/eventos",
+            icon: Calendar,
+        },
+        {
+            title: "Pedidos de Oração",
+            url: "/admin/dashboard/pedidos",
+            icon: MessageSquareHeart,
         },
         {
             title: "Banner Início",
@@ -60,6 +71,7 @@ const data = {
                 { title: "A RCC", url: "/admin/dashboard/a-rcc", icon: LayoutDashboard },
                 { title: "Sobre Nós", url: "/admin/dashboard/quem-somos", icon: Users },
                 { title: "História da RCC", url: "/admin/dashboard/historia-da-rcc", icon: History },
+                { title: "História na Diocese", url: "/admin/dashboard/diocesana", icon: History },
                 { title: "Formação", url: "/admin/dashboard/formacao", icon: GraduationCap },
                 { title: "Seminário de Vida", url: "/admin/dashboard/formacao/seminario-de-vida", icon: Flame },
             ]
@@ -77,11 +89,6 @@ const data = {
             icon: Globe,
         },
         {
-            title: "Editor SQL",
-            url: "/admin/dashboard/sql",
-            icon: Database,
-        },
-        {
             title: "Ministérios",
             url: "/admin/dashboard/ministerios",
             icon: Flame,
@@ -90,6 +97,11 @@ const data = {
             title: "Conselho Diocesano",
             url: "/admin/dashboard/conselho",
             icon: Users,
+        },
+        {
+            title: "Status do Sistema",
+            url: "/admin/status",
+            icon: ShieldCheck,
         },
         {
             title: "Configurações",
@@ -103,6 +115,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const router = useRouter();
 
     const handleLogout = async () => {
+        await fetch("/api/auth/session", { method: "DELETE" }).catch(() => {});
         await supabase.auth.signOut();
         router.push("/admin/login");
     };
@@ -113,10 +126,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <div className="flex items-center gap-3 px-3">
-                            <img
+                            <Image
                                 src="/logo-diocese.png"
                                 alt="Logo RCC"
-                                className="w-10 h-10 rounded-xl object-contain bg-white p-1 shadow-lg"
+                                width={40}
+                                height={40}
+                                className="rounded-xl object-contain bg-white p-1 shadow-lg"
                             />
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <span className="truncate text-xs font-bold uppercase tracking-widest text-blue-200">Painel Administrativo</span>
@@ -129,11 +144,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenu className="space-y-4">
                     <div className="space-y-1">
                         <div className="px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Principal</div>
-                        {data.navMain.filter(item => !item.items).map((item: any) => (
+                        {data.navMain.filter(item => !item.items).map((item: { title: string; url?: string; icon?: React.ElementType }) => (
                             <SidebarMenuItem key={item.title}>
                                 <SidebarMenuButton tooltip={item.title} asChild className="h-12 rounded-xl hover:bg-brand-blue/5 hover:text-brand-blue transition-all group">
-                                    <Link href={item.url}>
-                                        <item.icon className="group-hover:text-brand-gold transition-colors" />
+                                    <Link href={item.url || "#"}>
+                                        {item.icon && <item.icon className="group-hover:text-brand-gold transition-colors" />}
                                         <span className="font-medium">{item.title}</span>
                                     </Link>
                                 </SidebarMenuButton>
@@ -143,7 +158,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
                     <div className="space-y-1">
                         <div className="px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Páginas Institucionais</div>
-                        {data.navMain.find(i => i.title === "Páginas")?.items?.map((item: any) => (
+                        {data.navMain.find(i => i.title === "Páginas")?.items?.map((item: { title: string; url: string; icon: React.ElementType }) => (
                             <SidebarMenuItem key={item.title}>
                                 <SidebarMenuButton tooltip={item.title} asChild className="h-12 rounded-xl hover:bg-brand-blue/5 hover:text-brand-blue transition-all group">
                                     <Link href={item.url}>

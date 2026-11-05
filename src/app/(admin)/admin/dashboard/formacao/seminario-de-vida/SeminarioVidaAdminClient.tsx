@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, Loader2, CheckCircle2, Heart, List, ImageIcon } from "lucide-react";
+import { ImageUploader } from "@/components/admin/ImageUploader";
 
 interface SeminarioVidaAdminClientProps {
     initialData: any;
@@ -118,22 +119,19 @@ export function SeminarioVidaAdminClient({ initialData }: SeminarioVidaAdminClie
                                 className="rounded-xl"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label>URL Imagem Hero</Label>
-                            <Input
-                                value={formData.hero.image_url}
-                                onChange={(e) => setFormData({ ...formData, hero: { ...formData.hero, image_url: e.target.value } })}
-                                className="rounded-xl"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>URL Imagem Seção Sobre</Label>
-                            <Input
-                                value={formData.image_url}
-                                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                                className="rounded-xl"
-                            />
-                        </div>
+                        <ImageUploader
+                            label="Imagem Hero (Topo)"
+                            value={formData.hero.image_url || ""}
+                            onChange={(url) => setFormData({ ...formData, hero: { ...formData.hero, image_url: url } })}
+                            folder="banners"
+                            aspectRatio="banner"
+                        />
+                        <ImageUploader
+                            label="Imagem Seção Sobre"
+                            value={formData.image_url || ""}
+                            onChange={(url) => setFormData({ ...formData, image_url: url })}
+                            folder="galerias"
+                        />
                     </CardContent>
                 </Card>
 

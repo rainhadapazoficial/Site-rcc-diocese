@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { notFound } from "next/navigation";
 import parse from "html-react-parser";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { Metadata } from "next";
 
 export const revalidate = 60; // Revalidate every minute
@@ -56,7 +57,7 @@ export default async function CustomDynamicPage({ params }: { params: Promise<{ 
             <section className="py-24 bg-white">
                 <div className="max-w-4xl mx-auto px-4">
                     <article className="prose prose-lg max-w-none prose-headings:text-brand-blue prose-p:text-gray-600 prose-img:rounded-3xl prose-img:shadow-xl">
-                        {parse(page.content)}
+                        {parse(sanitizeHtml(page.content))}
                     </article>
                 </div>
             </section>

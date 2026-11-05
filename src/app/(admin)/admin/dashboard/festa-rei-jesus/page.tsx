@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageUploader } from "@/components/admin/ImageUploader";
 
 interface Atracao {
     nome: string;
@@ -140,13 +142,13 @@ export default function FestaReiJesusAdminPage() {
                     <div className="flex items-center gap-4 mt-1">
                         <p className="text-gray-500">Gerencie as edições passadas e futuras do evento.</p>
                         <span className="text-gray-300">|</span>
-                        <a
+                        <Link
                             href="/admin/dashboard/paginas"
                             className="text-brand-blue font-bold text-sm hover:underline flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-full border border-blue-100"
                         >
                             <Edit className="w-3 h-3" />
-                            Editar "Sobre o Evento" e Imagem
-                        </a>
+                            Editar &quot;Sobre o Evento&quot; e Imagem
+                        </Link>
                     </div>
                 </div>
                 <div className="flex gap-4">
@@ -244,20 +246,13 @@ export default function FestaReiJesusAdminPage() {
                                 </div>
 
                                 {/* Image */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="imagem_url">URL da Imagem (Opcional)</Label>
-                                    <Input
-                                        id="imagem_url"
-                                        placeholder="https://exemplo.com/foto.jpg"
-                                        value={formData.imagem_url || ""}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, imagem_url: e.target.value })}
-                                    />
-                                    {formData.imagem_url && (
-                                        <div className="mt-2 relative h-40 w-full rounded-md overflow-hidden bg-slate-100 border">
-                                            <img src={formData.imagem_url} alt="Preview" className="w-full h-full object-cover" onError={(e: React.SyntheticEvent<HTMLImageElement>) => (e.currentTarget.src = "https://placehold.co/600x400?text=Erro+Imagem")} />
-                                        </div>
-                                    )}
-                                </div>
+                                <ImageUploader
+                                    label="Imagem da Edição (Opcional)"
+                                    placeholder="https://exemplo.com/foto.jpg"
+                                    value={formData.imagem_url || ""}
+                                    onChange={(url) => setFormData({ ...formData, imagem_url: url })}
+                                    folder="eventos"
+                                />
 
                                 {/* Description */}
                                 <div className="space-y-2">
@@ -295,7 +290,7 @@ export default function FestaReiJesusAdminPage() {
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </Button>
-                                            <div className="grid grid-cols-2 gap-3 pr-10">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-10">
                                                 <div className="space-y-1">
                                                     <Label className="text-xs text-gray-500">Nome</Label>
                                                     <Input
@@ -306,29 +301,24 @@ export default function FestaReiJesusAdminPage() {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <Label className="text-xs text-gray-500">Foto URL</Label>
+                                                    <Label className="text-xs text-gray-500">Descrição</Label>
                                                     <Input
-                                                        placeholder="https://..."
-                                                        value={atracao.foto_url}
-                                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateAtracao(index, "foto_url", e.target.value)}
+                                                        placeholder="Cantor, Pregador, Banda..."
+                                                        value={atracao.descricao}
+                                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateAtracao(index, "descricao", e.target.value)}
                                                         className="rounded-xl"
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="space-y-1">
-                                                <Label className="text-xs text-gray-500">Descrição</Label>
-                                                <Input
-                                                    placeholder="Cantor, Pregador, Banda..."
-                                                    value={atracao.descricao}
-                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateAtracao(index, "descricao", e.target.value)}
-                                                    className="rounded-xl"
-                                                />
-                                            </div>
-                                            {atracao.foto_url && (
-                                                <div className="h-20 w-20 rounded-xl overflow-hidden bg-gray-200">
-                                                    <img src={atracao.foto_url} alt={atracao.nome} className="w-full h-full object-cover" />
-                                                </div>
-                                            )}
+                                            <ImageUploader
+                                                label="Foto da Atração (Pregador, Cantor, Sacerdote)"
+                                                placeholder="https://..."
+                                                value={atracao.foto_url || ""}
+                                                onChange={(url) => updateAtracao(index, "foto_url", url)}
+                                                folder="pessoas"
+                                                aspectRatio="square"
+                                                compact
+                                            />
                                         </div>
                                     ))}
                                 </div>

@@ -88,17 +88,57 @@ CREATE TABLE IF NOT EXISTS gallery (
 
 -- Security Policies
 ALTER TABLE prayer_requests ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public insert" ON prayer_requests FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow authenticated read" ON prayer_requests FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow public insert" ON prayer_requests;
+CREATE POLICY "Allow public insert" ON prayer_requests FOR INSERT TO anon, authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow authenticated read" ON prayer_requests;
+CREATE POLICY "Allow authenticated read" ON prayer_requests FOR SELECT TO authenticated USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Allow authenticated manage on prayer_requests" ON prayer_requests;
+CREATE POLICY "Allow authenticated manage on prayer_requests" ON prayer_requests FOR ALL TO authenticated USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
 
 ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public read" ON posts FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow public read" ON posts;
+CREATE POLICY "Allow public read" ON posts FOR SELECT TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "Allow authenticated full access on posts" ON posts;
+CREATE POLICY "Allow authenticated full access on posts" ON posts FOR ALL TO authenticated USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
 
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public read" ON events FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow public read" ON events;
+CREATE POLICY "Allow public read" ON events FOR SELECT TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "Allow authenticated full access on events" ON events;
+CREATE POLICY "Allow authenticated full access on events" ON events FOR ALL TO authenticated USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
 
 ALTER TABLE podcasts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public read" ON podcasts FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow public read" ON podcasts;
+CREATE POLICY "Allow public read" ON podcasts FOR SELECT TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "Allow authenticated full access on podcasts" ON podcasts;
+CREATE POLICY "Allow authenticated full access on podcasts" ON podcasts FOR ALL TO authenticated USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
 
 ALTER TABLE gallery ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public read" ON gallery FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow public read" ON gallery;
+CREATE POLICY "Allow public read" ON gallery FOR SELECT TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "Allow authenticated full access on gallery" ON gallery;
+CREATE POLICY "Allow authenticated full access on gallery" ON gallery FOR ALL TO authenticated USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+
+ALTER TABLE groups ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public read" ON groups;
+CREATE POLICY "Allow public read" ON groups FOR SELECT TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "Allow authenticated full access on groups" ON groups;
+CREATE POLICY "Allow authenticated full access on groups" ON groups FOR ALL TO authenticated USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+
+ALTER TABLE group_coordinator_history ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public read" ON group_coordinator_history;
+CREATE POLICY "Allow public read" ON group_coordinator_history FOR SELECT TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "Allow authenticated full access on group_coordinator_history" ON group_coordinator_history;
+CREATE POLICY "Allow authenticated full access on group_coordinator_history" ON group_coordinator_history FOR ALL TO authenticated USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+
+-- Fase 4: Solução atômica para race condition do tracking
+-- Esta função cria o registro ou incrementa as visualizações de forma atômica
+CREATE OR REPLACE FUNCTION increment_page_view(page_slug text)
+RETURNS void AS $$
+BEGIN
+  INSERT INTO page_views (slug, views)
+  VALUES (page_slug, 1)
+  ON CONFLICT (slug)
+  DO UPDATE SET views = page_views.views + 1, updated_at = now();
+END;
+$$ LANGUAGE plpgsql;

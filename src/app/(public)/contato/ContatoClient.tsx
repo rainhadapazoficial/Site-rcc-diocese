@@ -1,9 +1,52 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, MapPin, Instagram, Facebook, Youtube } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Mail, Phone, MapPin, Instagram, Facebook, Youtube, Heart, Send, Loader2, CheckCircle2 } from "lucide-react";
 
 export default function ContatoClient() {
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
+    const [message, setMessage] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+    const [errorMessage, setErrorMessage] = useState("");
+
+    async function handlePrayerSubmit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setSubmitStatus("idle");
+        setErrorMessage("");
+
+        try {
+            const res = await fetch("/api/prayer", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, phone, message }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                setSubmitStatus("error");
+                setErrorMessage(data.error || "Não foi possível enviar seu pedido. Tente novamente.");
+            } else {
+                setSubmitStatus("success");
+                setName("");
+                setEmail("");
+                setPhone("");
+                setMessage("");
+            }
+        } catch {
+            setSubmitStatus("error");
+            setErrorMessage("Erro de conexão ao enviar seu pedido de oração.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
     return (
         <div className="flex flex-col">
             {/* Header */}
@@ -12,8 +55,112 @@ export default function ContatoClient() {
                 <div className="max-w-4xl mx-auto px-4 relative z-10">
                     <h1 className="text-6xl font-bold mb-6 italic text-brand-gold">Contato</h1>
                     <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-                        Estamos aqui para ouvir você. Entre em contato pelos nossos canais oficiais ou venha nos visitar.
+                        Estamos aqui para ouvir você. Entre em contato pelos nossos canais oficiais, envie seu pedido de oração ou venha nos visitar.
                     </p>
+                </div>
+            </section>
+
+            {/* Prayer Request Form Section (#pedido-oracao) */}
+            <section id="pedido-oracao" className="py-20 bg-slate-50 border-b border-gray-100 scroll-mt-20">
+                <div className="max-w-3xl mx-auto px-4">
+                    <div className="bg-white rounded-[3rem] shadow-xl border border-brand-gold/20 p-8 md:p-12">
+                        <div className="text-center mb-8">
+                            <div className="inline-flex items-center gap-2 px-4 py-1 bg-brand-gold/10 text-brand-gold rounded-full text-xs font-bold uppercase tracking-widest mb-4">
+                                <Heart className="w-4 h-4" /> Ministério de Intercessão
+                            </div>
+                            <h2 className="text-3xl md:text-4xl font-bold text-brand-blue font-serif italic mb-3">
+                                Pedido de Oração
+                            </h2>
+                            <p className="text-gray-600">
+                                Confie suas intenções à nossa rede diocesana de intercessores. Rezaremos por você e por sua família.
+                            </p>
+                        </div>
+
+                        {submitStatus === "success" && (
+                            <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center gap-3 font-medium">
+                                <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600" />
+                                <span>Seu pedido de oração foi recebido com carinho! Nossos intercessores estarão em oração por sua intenção.</span>
+                            </div>
+                        )}
+
+                        {submitStatus === "error" && (
+                            <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
+                                {errorMessage}
+                            </div>
+                        )}
+
+                        <form onSubmit={handlePrayerSubmit} className="space-y-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div className="space-y-2">
+                                    <Label htmlFor="prayer-name" className="text-brand-blue font-bold">Seu Nome *</Label>
+                                    <Input
+                                        id="prayer-name"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        placeholder="Como podemos chamar você?"
+                                        required
+                                        maxLength={120}
+                                        className="rounded-xl h-12"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="prayer-phone" className="text-brand-blue font-bold">WhatsApp / Telefone (Opcional)</Label>
+                                    <Input
+                                        id="prayer-phone"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
+                                        placeholder="(66) 99999-9999"
+                                        maxLength={40}
+                                        className="rounded-xl h-12"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="prayer-email" className="text-brand-blue font-bold">E-mail (Opcional)</Label>
+                                <Input
+                                    id="prayer-email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="seu-email@exemplo.com"
+                                    maxLength={160}
+                                    className="rounded-xl h-12"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="prayer-message" className="text-brand-blue font-bold">Sua Intenção ou Pedido de Oração *</Label>
+                                <Textarea
+                                    id="prayer-message"
+                                    value={message}
+                                    onChange={(e) => setMessage(e.target.value)}
+                                    placeholder="Escreva aqui seu pedido de oração..."
+                                    required
+                                    maxLength={3000}
+                                    className="rounded-2xl min-h-[130px]"
+                                />
+                            </div>
+
+                            <Button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="w-full h-14 rounded-2xl bg-brand-blue hover:bg-brand-blue/90 text-white font-bold text-lg shadow-lg shadow-brand-blue/20"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                        Enviando pedido...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Send className="w-5 h-5 mr-2 text-brand-gold" />
+                                        Enviar Pedido de Oração
+                                    </>
+                                )}
+                            </Button>
+                        </form>
+                    </div>
                 </div>
             </section>
 

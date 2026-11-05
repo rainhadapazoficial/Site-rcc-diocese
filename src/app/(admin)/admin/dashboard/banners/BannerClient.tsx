@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, Loader2, CheckCircle2, AlertCircle, Image as ImageIcon } from "lucide-react";
+import { ImageUploader } from "@/components/admin/ImageUploader";
 
 interface BannerClientProps {
     initialData: any;
@@ -143,14 +144,14 @@ export function BannerClient({ initialData }: BannerClientProps) {
                                     className="rounded-xl min-h-[100px]"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <Label>URL da Imagem de Fundo</Label>
-                                <Input
-                                    value={currentBanner.image_url}
-                                    onChange={(e) => updateBanner(activeIndex, 'image_url', e.target.value)}
-                                    className="rounded-xl"
-                                />
-                            </div>
+                            <ImageUploader
+                                label="Imagem de Fundo do Banner"
+                                value={currentBanner.image_url || ""}
+                                onChange={(url) => updateBanner(activeIndex, 'image_url', url)}
+                                folder="banners"
+                                aspectRatio="banner"
+                                hint="Recomendado: 1920x1080px"
+                            />
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { ImageUploader } from "@/components/admin/ImageUploader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,37 +42,6 @@ export default function GruposAdminPage() {
         subtitle: "Encontre um Grupo de Oração da Renovação Carismática Católica mais próximo de você e venha vivenciar Pentecostes!",
     });
     const [isSavingSettings, setIsSavingSettings] = useState(false);
-    const [uploadingField, setUploadingField] = useState<string | null>(null);
-
-    async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>, fieldName: string, subfolder: string, callback: (url: string) => void) {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        setUploadingField(fieldName);
-        try {
-            const publicUrl = await uploadImage(file, subfolder);
-            callback(publicUrl);
-        } catch (error: any) {
-            alert("Erro ao fazer upload: " + error.message);
-        } finally {
-            setUploadingField(null);
-        }
-    }
-
-    async function uploadImage(file: File, subfolder: string) {
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
-        const filePath = `${subfolder}/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-            .from("media")
-            .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data } = supabase.storage.from("media").getPublicUrl(filePath);
-        return data.publicUrl;
-    }
 
     useEffect(() => {
         fetchGroups();
@@ -345,90 +315,28 @@ export default function GruposAdminPage() {
                                 <ScrollArea className="flex-1 overflow-y-auto p-8">
                                     <div className="space-y-6">
                                             <div className="space-y-4">
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="imagem" className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Banner do Grupo (Fundo do Modal)</Label>
-                                                    <p className="text-[9px] text-brand-blue/60 mt-[-8px] px-1 font-medium italic">Recomendado: 1920x250px (panorâmico)</p>
-                                                    <div className="flex gap-2">
-                                                        <Input
-                                                            id="imagem"
-                                                            placeholder="https://exemplo.com/banner.jpg"
-                                                            value={formData.imagem || ""}
-                                                            onChange={(e) => setFormData({ ...formData, imagem: e.target.value })}
-                                                            className="rounded-xl"
-                                                        />
-                                                        <div className="relative">
-                                                            <input
-                                                                type="file"
-                                                                id="upload-group-img"
-                                                                className="hidden"
-                                                                accept="image/*"
-                                                                onChange={(e) => handleFileChange(e, 'group-img', 'grupos', (url) => setFormData({ ...formData, imagem: url }))}
-                                                            />
-                                                            <Button
-                                                                type="button"
-                                                                variant="outline"
-                                                                onClick={() => document.getElementById('upload-group-img')?.click()}
-                                                                disabled={uploadingField === 'group-img'}
-                                                                className="rounded-xl border-brand-blue text-brand-blue hover:bg-brand-blue/10 h-10 px-3"
-                                                            >
-                                                                {uploadingField === 'group-img' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                <ImageUploader
+                                                    label="Banner do Grupo (Fundo do Modal)"
+                                                    hint="Recomendado: 1920x250px (panorâmico)"
+                                                    placeholder="https://exemplo.com/banner.jpg"
+                                                    value={formData.imagem || ""}
+                                                    onChange={(url) => setFormData({ ...formData, imagem: url })}
+                                                    folder="grupos-oracao"
+                                                    aspectRatio="banner"
+                                                    compact
+                                                />
 
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="logo_url" className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Logotipo do Grupo</Label>
-                                                    <p className="text-[9px] text-brand-blue/60 mt-[-8px] px-1 font-medium italic">Recomendado: 512x512px (quadrado, PNG transparente)</p>
-                                                    <div className="flex gap-2">
-                                                        <Input
-                                                            id="logo_url"
-                                                            placeholder="https://exemplo.com/logo.png"
-                                                            value={formData.logo_url || ""}
-                                                            onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                                                            className="rounded-xl"
-                                                        />
-                                                        <div className="relative">
-                                                            <input
-                                                                type="file"
-                                                                id="upload-group-logo"
-                                                                className="hidden"
-                                                                accept="image/*"
-                                                                onChange={(e) => handleFileChange(e, 'group-logo', 'grupos', (url) => setFormData({ ...formData, logo_url: url }))}
-                                                            />
-                                                            <Button
-                                                                type="button"
-                                                                variant="outline"
-                                                                onClick={() => document.getElementById('upload-group-logo')?.click()}
-                                                                disabled={uploadingField === 'group-logo'}
-                                                                className="rounded-xl border-brand-blue text-brand-blue hover:bg-brand-blue/10 h-10 px-3"
-                                                            >
-                                                                {uploadingField === 'group-logo' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                <ImageUploader
+                                                    label="Logotipo do Grupo"
+                                                    hint="Recomendado: 512x512px (quadrado, PNG transparente)"
+                                                    placeholder="https://exemplo.com/logo.png"
+                                                    value={formData.logo_url || ""}
+                                                    onChange={(url) => setFormData({ ...formData, logo_url: url })}
+                                                    folder="logos"
+                                                    aspectRatio="square"
+                                                    compact
+                                                />
                                             </div>
-                                            {(formData.imagem || formData.logo_url) && (
-                                                <div className="mt-2 flex gap-4">
-                                                    {formData.imagem && (
-                                                        <div className="flex-1">
-                                                            <p className="text-[9px] uppercase font-bold text-gray-400 mb-1">Preview Banner</p>
-                                                            <div className="relative h-24 w-full rounded-xl overflow-hidden bg-slate-100 border">
-                                                                <img src={formData.imagem} alt="Banner Preview" className="w-full h-full object-cover" />
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    {formData.logo_url && (
-                                                        <div className="w-24">
-                                                            <p className="text-[9px] uppercase font-bold text-gray-400 mb-1">Preview Logo</p>
-                                                            <div className="relative h-24 w-24 rounded-xl overflow-hidden bg-slate-100 border flex items-center justify-center p-2">
-                                                                <img src={formData.logo_url} alt="Logo Preview" className="max-w-full max-h-full object-contain" />
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
 
 
                                         <div className="space-y-2">
@@ -474,34 +382,15 @@ export default function GruposAdminPage() {
                                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Coordenador Atual</label>
                                                 <Input name="coordenador" defaultValue={editingGroup?.coordenador} placeholder="Nome do coord." className="rounded-xl" />
                                             </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Foto do Coordenador (URL)</label>
-                                                <div className="flex gap-2">
-                                                    <Input
-                                                        value={formData.coordenador_foto_url || ""}
-                                                        onChange={(e) => setFormData({ ...formData, coordenador_foto_url: e.target.value })}
-                                                        placeholder="https://..."
-                                                        className="rounded-xl"
-                                                    />
-                                                    <div className="relative">
-                                                        <input
-                                                            type="file"
-                                                            id="upload-coord-photo"
-                                                            className="hidden"
-                                                            accept="image/*"
-                                                            onChange={(e) => handleFileChange(e, 'coord-photo', 'coordenadores', (url) => setFormData({ ...formData, coordenador_foto_url: url }))}
-                                                        />
-                                                        <Button
-                                                            type="button"
-                                                            variant="outline"
-                                                            onClick={() => document.getElementById('upload-coord-photo')?.click()}
-                                                            disabled={uploadingField === 'coord-photo'}
-                                                            className="rounded-xl border-brand-blue text-brand-blue hover:bg-brand-blue/10 h-10 px-3"
-                                                        >
-                                                            {uploadingField === 'coord-photo' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                                                        </Button>
-                                                    </div>
-                                                </div>
+                                            <div className="col-span-2">
+                                                <ImageUploader
+                                                    label="Foto do Coordenador Atual"
+                                                    value={formData.coordenador_foto_url || ""}
+                                                    onChange={(url) => setFormData({ ...formData, coordenador_foto_url: url })}
+                                                    folder="pessoas"
+                                                    aspectRatio="square"
+                                                    compact
+                                                />
                                             </div>
                                             <div className="space-y-2 col-span-2">
                                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Biênio / Mandato Atual</label>
@@ -634,35 +523,15 @@ export default function GruposAdminPage() {
                                                                 </div>
                                                             </div>
 
-                                                            <div className="space-y-2">
-                                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">URL da Foto do Coordenador</label>
-                                                                <div className="flex gap-2">
-                                                                    <Input
-                                                                        placeholder="https://exemplo.com/foto.jpg"
-                                                                        value={row.foto_url}
-                                                                        onChange={(e) => updateCoordinatorHistoryRow(index, "foto_url", e.target.value)}
-                                                                        className="rounded-xl h-11"
-                                                                    />
-                                                                    <div className="relative">
-                                                                        <input
-                                                                            type="file"
-                                                                            id={`upload-history-${index}`}
-                                                                            className="hidden"
-                                                                            accept="image/*"
-                                                                            onChange={(e) => handleFileChange(e, `history-${index}`, 'coordenadores', (url) => updateCoordinatorHistoryRow(index, "foto_url", url))}
-                                                                        />
-                                                                        <Button
-                                                                            type="button"
-                                                                            variant="outline"
-                                                                            onClick={() => document.getElementById(`upload-history-${index}`)?.click()}
-                                                                            disabled={uploadingField === `history-${index}`}
-                                                                            className="rounded-xl border-brand-blue text-brand-blue hover:bg-brand-blue/10 h-11 px-3"
-                                                                        >
-                                                                            {uploadingField === `history-${index}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                                                                        </Button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
+                                                            <ImageUploader
+                                                                label="Foto do Coordenador"
+                                                                placeholder="https://exemplo.com/foto.jpg"
+                                                                value={row.foto_url || ""}
+                                                                onChange={(url) => updateCoordinatorHistoryRow(index, "foto_url", url)}
+                                                                folder="pessoas"
+                                                                aspectRatio="square"
+                                                                compact
+                                                            />
                                                         </div>
                                                     ))}
                                                 </div>
@@ -699,35 +568,16 @@ export default function GruposAdminPage() {
                             <Label htmlFor="title" className="text-gray-500 font-bold uppercase text-[10px] tracking-widest px-1">Título da Página</Label>
                             <Input id="title" name="title" defaultValue={pageSettings.title} className="rounded-xl border-gray-100 bg-gray-50/50" />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="image_url" className="text-gray-500 font-bold uppercase text-[10px] tracking-widest px-1">Imagem de Fundo (URL)</Label>
-                            <div className="flex gap-2">
-                                <Input
-                                    id="image_url"
-                                    name="image_url"
-                                    value={pageSettings.image_url}
-                                    onChange={(e) => setPageSettings({ ...pageSettings, image_url: e.target.value })}
-                                    className="rounded-xl border-gray-100 bg-gray-50/50"
-                                />
-                                <div className="relative">
-                                    <input
-                                        type="file"
-                                        id="upload-page-bg"
-                                        className="hidden"
-                                        accept="image/*"
-                                        onChange={(e) => handleFileChange(e, 'page-bg', 'paginas', (url) => setPageSettings({ ...pageSettings, image_url: url }))}
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => document.getElementById('upload-page-bg')?.click()}
-                                        disabled={uploadingField === 'page-bg'}
-                                        className="rounded-xl border-brand-blue text-brand-blue hover:bg-brand-blue/10 h-10 px-3"
-                                    >
-                                        {uploadingField === 'page-bg' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                                    </Button>
-                                </div>
-                            </div>
+                        <div>
+                            <ImageUploader
+                                name="image_url"
+                                label="Imagem de Fundo da Página"
+                                value={pageSettings.image_url || ""}
+                                onChange={(url) => setPageSettings({ ...pageSettings, image_url: url })}
+                                folder="banners"
+                                aspectRatio="banner"
+                                compact
+                            />
                         </div>
                         <div className="space-y-2 md:col-span-2">
                             <Label htmlFor="subtitle" className="text-gray-500 font-bold uppercase text-[10px] tracking-widest px-1">Subtítulo / Descrição</Label>

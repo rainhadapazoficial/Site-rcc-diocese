@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { ImageUploader } from "@/components/admin/ImageUploader";
 
 export default function ConselhoAdminPage() {
     const [activeTab, setActiveTab] = useState<"mandatos" | "membros">("mandatos");
@@ -377,10 +378,14 @@ export default function ConselhoAdminPage() {
                                     <Label>Cargo (ex: Presidente do Conselho)</Label>
                                     <Input value={formData.cargo || ""} onChange={e => setFormData({ ...formData, cargo: e.target.value })} required />
                                 </div>
-                                <div>
-                                    <Label>Foto URL</Label>
-                                    <Input value={formData.foto_url || ""} onChange={e => setFormData({ ...formData, foto_url: e.target.value })} placeholder="https://..." />
-                                </div>
+                                <ImageUploader
+                                    label="Foto do Membro"
+                                    value={formData.foto_url || ""}
+                                    onChange={(url) => setFormData({ ...formData, foto_url: url })}
+                                    folder="pessoas"
+                                    aspectRatio="square"
+                                    compact
+                                />
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <Label>Categoria</Label>

@@ -6,6 +6,7 @@ import { Loader2, Calendar, MapPin, Crown, ChevronRight, History, Info, Star, Us
 import { Card, CardContent } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import parse from "html-react-parser";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface Atracao {
     nome: string;
@@ -111,7 +112,7 @@ export default function FestaReiJesusPage() {
                         <h2 className="text-4xl font-bold text-brand-blue italic">{pageContent?.title || "O que é a Festa do Rei Jesus?"}</h2>
                         <div className="text-gray-600 leading-relaxed text-lg space-y-4">
                             {pageContent ? (
-                                parse(pageContent.content)
+                                parse(sanitizeHtml(pageContent.content))
                             ) : (
                                 <>
                                     <p>

@@ -18,12 +18,19 @@ END $$;
 
 ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
 
--- Cria a permissão universal (Admin pode apagar, editar, criar)
-CREATE POLICY "Universal Events Access" 
+-- Cria leitura pública e permissão de escrita apenas para Admin autenticado
+CREATE POLICY "Public Read Events"
+ON public.events
+FOR SELECT
+TO anon, authenticated
+USING (true);
+
+CREATE POLICY "Authenticated Events Access" 
 ON public.events 
 FOR ALL 
-USING (true) 
-WITH CHECK (true);
+TO authenticated
+USING (auth.role() = 'authenticated') 
+WITH CHECK (auth.role() = 'authenticated');
 
 
 -- ---------------------------------------------------------
@@ -43,12 +50,19 @@ END $$;
 
 ALTER TABLE public.gallery ENABLE ROW LEVEL SECURITY;
 
--- Cria a permissão universal
-CREATE POLICY "Universal Gallery Access" 
+-- Cria leitura pública e permissão de escrita apenas para Admin autenticado
+CREATE POLICY "Public Read Gallery"
+ON public.gallery
+FOR SELECT
+TO anon, authenticated
+USING (true);
+
+CREATE POLICY "Authenticated Gallery Access" 
 ON public.gallery 
 FOR ALL 
-USING (true) 
-WITH CHECK (true);
+TO authenticated
+USING (auth.role() = 'authenticated') 
+WITH CHECK (auth.role() = 'authenticated');
 
 -- ---------------------------------------------------------
 -- 3. STORAGE (Apagar imagens)

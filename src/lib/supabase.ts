@@ -10,4 +10,4 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
         get: () => {
             throw new Error("Supabase client accessed before initialization. Check environment variables.");
         }
-    }) as any;
+    }) as ReturnType<typeof createClient>;

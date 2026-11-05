@@ -1,6 +1,7 @@
 import Parser from 'rss-parser';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import { sanitizeHtml } from '../src/lib/sanitize';
 
 dotenv.config();
 
@@ -32,6 +33,22 @@ async function syncRCCNews() {
         const feed = await parser.parseURL(FEED_URL);
         console.log(`📡 Encontradas ${feed.items.length} notícias no feed.`);
 
+        const allSlugs = feed.items.map(item => {
+            const link = item.link || '';
+            return link.replace(/\/$/, '').split('/').pop() || '';
+        }).filter(Boolean);
+
+        // Fetch all existing slugs at once
+        const { data: existingPosts, error: fetchError } = await supabase
+            .from('posts')
+            .select('slug')
+            .in('slug', allSlugs);
+
+        if (fetchError) throw fetchError;
+
+        const existingSlugSet = new Set(existingPosts?.map(p => p.slug) || []);
+        const postsToInsert = [];
+
         for (const item of feed.items) {
             const title = item.title || '';
             const link = item.link || '';
@@ -39,26 +56,24 @@ async function syncRCCNews() {
             const description = item.contentSnippet || '';
             const pubDate = item.pubDate ? new Date(item.pubDate) : new Date();
 
-            // Extract slug from link
             const slug = link.replace(/\/$/, '').split('/').pop() || '';
+            if (!slug || existingSlugSet.has(slug)) continue;
 
-            // Try to find image
             let image_url = 'https://rccbrasil.org.br/wp-content/uploads/2021/04/logo-rcc-brasil.png';
 
-            // 1. Check for mediaContent
             if (item.mediaContent && item.mediaContent.$ && item.mediaContent.$.url) {
                 image_url = item.mediaContent.$.url;
             } else {
-                // 2. Search in content for <img> tag
-                const imgMatch = content.match(/<img[^>]*src=["'](https?:\/\/[^"'>]+\.(?:jpg|jpeg|png|webp))["']/i);
+                // Improved regex to handle query parameters and different formats
+                const imgMatch = content.match(/<img[^>]*src=["'](https?:\/\/[^"'>]+(?:\.(?:jpg|jpeg|png|webp|gif))?(?:\?[^"'>]*)?)["']/i);
                 if (imgMatch) {
                     image_url = imgMatch[1];
                 }
             }
 
-            const post = {
-                title,
-                content,
+            postsToInsert.push({
+                title: stripHTML(title).trim(),
+                content: sanitizeHtml(content),
                 excerpt: stripHTML(description).slice(0, 200) + '...',
                 slug,
                 category: 'RCC Brasil',
@@ -66,30 +81,24 @@ async function syncRCCNews() {
                 date: pubDate.toISOString().split('T')[0],
                 image_url,
                 created_at: pubDate.toISOString()
-            };
-
-            // Check if post already exists
-            const { data: existingPost } = await supabase
-                .from('posts')
-                .select('id')
-                .eq('slug', slug)
-                .single();
-
-            if (!existingPost) {
-                const { error: insertError } = await supabase
-                    .from('posts')
-                    .insert([post]);
-
-                if (insertError) {
-                    console.error(`❌ Erro ao inserir post "${title}":`, insertError.message);
-                } else {
-                    console.log(`✅ Nova notícia importada: ${title}`);
-                    entriesSynced++;
-                }
-            }
+            });
         }
 
-        // Log success
+        if (postsToInsert.length > 0) {
+            const { error: insertError } = await supabase
+                .from('posts')
+                .insert(postsToInsert);
+
+            if (insertError) {
+                console.error(`❌ Erro no bulk insert:`, insertError.message);
+            } else {
+                console.log(`✅ ${postsToInsert.length} novas notícias importadas com sucesso!`);
+                entriesSynced = postsToInsert.length;
+            }
+        } else {
+            console.log(`✅ Nenhuma nova notícia para importar.`);
+        }
+
         await supabase.from('sync_logs').insert([{
             status: 'success',
             entries_synced: entriesSynced,
@@ -101,7 +110,6 @@ async function syncRCCNews() {
     } catch (error: any) {
         console.error('💥 Erro crítico na sincronização:', error.message);
 
-        // Log error
         await supabase.from('sync_logs').insert([{
             status: 'error',
             message: `Erro na sincronização: ${error.message}`

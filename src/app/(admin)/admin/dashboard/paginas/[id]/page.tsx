@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { PremiumEditor } from "@/components/admin/PremiumEditor";
+import { ImageUploader } from "@/components/admin/ImageUploader";
 import { Save, ArrowLeft, Loader2, Globe, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -170,14 +171,15 @@ export default function PaginaEditorPage() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>URL da Imagem de Destaque</Label>
-                                <Input
+                                <ImageUploader
+                                    label="Imagem de Destaque"
                                     placeholder="Ex: https://.../foto.jpg"
                                     value={formData.image_url || ""}
-                                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                                    className="rounded-xl h-12"
+                                    onChange={(url) => setFormData({ ...formData, image_url: url })}
+                                    folder="galerias"
+                                    hint="Esta imagem aparecerá ao lado do texto explicativo (ex: Festa do Rei Jesus)."
+                                    compact
                                 />
-                                <p className="text-[10px] text-gray-400">Esta imagem aparecerá ao lado do texto explicativo (ex: Festa do Rei Jesus).</p>
                             </div>
                             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
                                 <div className="space-y-0.5">

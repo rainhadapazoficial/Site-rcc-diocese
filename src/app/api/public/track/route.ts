@@ -1,41 +1,41 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
+const VALID_SLUG_REGEX = /^\/?[a-zA-Z0-9\/_-]{0,120}$/;
+
 export async function POST(req: Request) {
     try {
-        const { slug } = await req.json();
-        if (!slug) return NextResponse.json({ error: 'Missing slug' }, { status: 400 });
+        const ip = getClientIp(req);
+        if (!checkRateLimit(`track:${ip}`, 60, 60 * 1000)) {
+            return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+        }
+
+        const body = await req.json().catch(() => null);
+        const slug = typeof body?.slug === 'string' ? body.slug.trim() : '';
+
+        if (!slug || !VALID_SLUG_REGEX.test(slug)) {
+            return NextResponse.json({ error: 'Invalid slug' }, { status: 400 });
+        }
 
         if (!supabaseUrl || !supabaseServiceKey) {
-            throw new Error('Supabase environment variables are missing');
+            return NextResponse.json({ error: 'Tracking unavailable' }, { status: 500 });
         }
 
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-        // Incrementar visualizações usando RPC para ser atômico ou upsert manual
-        // Tentamos buscar primeiro para ver se existe
-        const { data: existing } = await supabase
-            .from('page_views')
-            .select('views')
-            .eq('slug', slug)
-            .single();
+        // Incrementar visualizações usando RPC atômica
+        const { error } = await supabase.rpc('increment_page_view', { page_slug: slug });
 
-        if (existing) {
-            await supabase
-                .from('page_views')
-                .update({ views: existing.views + 1, updated_at: new Date().toISOString() })
-                .eq('slug', slug);
-        } else {
-            await supabase
-                .from('page_views')
-                .insert({ slug, views: 1 });
+        if (error) {
+            console.warn('increment_page_view RPC warning:', error.message);
         }
 
         return NextResponse.json({ success: true });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch {
+        return NextResponse.json({ error: 'Tracking failed' }, { status: 500 });
     }
 }

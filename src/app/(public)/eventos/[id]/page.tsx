@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import parse from "html-react-parser";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { Calendar, MapPin, Clock, ArrowLeft, Share2, Info } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -86,7 +87,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                             </h2>
                             <div className="prose prose-sm sm:prose lg:prose-lg max-w-none prose-headings:text-brand-blue prose-img:rounded-3xl">
                                 {typeof event.description === 'string' && event.description.startsWith('<')
-                                    ? parse(event.description)
+                                    ? parse(sanitizeHtml(event.description))
                                     : <p className="whitespace-pre-wrap">{event.description}</p>
                                 }
                             </div>
@@ -98,8 +99,14 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                                 <h3 className="text-2xl font-bold text-brand-blue mb-2">Vai participar conosco?</h3>
                                 <p className="text-gray-600">Convide seus amigos e familiares para este momento de bênção.</p>
                             </div>
-                            <Button className="bg-brand-blue text-white w-full md:w-auto h-14 px-8 rounded-2xl gap-2 font-bold shadow-xl shadow-brand-blue/20 transition-all hover:-translate-y-1">
-                                <Share2 className="w-5 h-5" /> Compartilhar Convite
+                            <Button asChild className="bg-brand-blue text-white w-full md:w-auto h-14 px-8 rounded-2xl gap-2 font-bold shadow-xl shadow-brand-blue/20 transition-all hover:-translate-y-1">
+                                <a
+                                    href={`https://wa.me/?text=${encodeURIComponent(`Venha participar do evento "${event.title}" da RCC Diocese de Sinop! Local: ${event.location || "Sinop - MT"}`)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <Share2 className="w-5 h-5" /> Compartilhar Convite
+                                </a>
                             </Button>
                         </div>
                     </div>
@@ -119,8 +126,14 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                                     <MapPin className="w-6 h-6 text-brand-gold flex-shrink-0" />
                                     <span className="text-blue-50 leading-relaxed font-medium">{event.location}</span>
                                 </div>
-                                <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10 h-12 rounded-xl">
-                                    Ver no Google Maps
+                                <Button asChild variant="outline" className="w-full border-white/20 text-white hover:bg-white/10 h-12 rounded-xl">
+                                    <a
+                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location || "Sinop MT")}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Ver no Google Maps
+                                    </a>
                                 </Button>
                             </div>
                         </div>

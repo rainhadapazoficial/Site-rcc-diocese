@@ -15,6 +15,8 @@ import {
     DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 import { PremiumEditor } from "@/components/admin/PremiumEditor";
+import { ImageUploader } from "@/components/admin/ImageUploader";
+import { deleteAdminStorageImage } from "@/lib/storage-client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { shareToSocialMedia } from "@/lib/n8n";
 import { Switch } from "@/components/ui/switch";
@@ -128,20 +130,12 @@ export default function NoticiasAdminPage() {
         if (!confirm(`Confirmar exclusão definitiva do artigo: "${post.title}"?`)) return;
 
         try {
-            // 1. Primeiro: Buscar/Identificar a imagem e deletar do Storage
-            if (post.image_url && post.image_url.includes("supabase.co/storage/v1/object/public/")) {
-                const urlParts = post.image_url.split("/public/")[1];
-                const bucketName = urlParts.split("/")[0];
-                const filePath = urlParts.split("/").slice(1).join("/");
-
-                if (bucketName && filePath) {
-                    console.log(`[STORAGE] Removendo arquivo: ${bucketName}/${filePath}`);
-                    const { error: storageError } = await supabase.storage.from(bucketName).remove([filePath]);
-                    if (storageError) {
-                        console.warn("[STORAGE] Alerta na remoção da imagem:", storageError.message);
-                        // Seguimos em frente mesmo se o arquivo não existir mais no storage
-                    }
-                }
+            // 1. Primeiro: Remover a imagem do Storage com verificação segura de referências
+            if (post.image_url) {
+                await deleteAdminStorageImage(post.image_url, {
+                    excludeTable: "posts",
+                    excludeId: post.id,
+                });
             }
 
             // 2. Segundo: Deletar a linha na tabela 'posts'
@@ -221,14 +215,21 @@ export default function NoticiasAdminPage() {
                                 </div>
 
                                 <TabsContent value="editor" className="flex-1 overflow-y-auto p-8 space-y-6 m-0">
-                                    <div className="grid grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Categoria</label>
-                                            <Input name="category" defaultValue={editingPost?.category} placeholder="Ex: Formação" className="rounded-xl" required />
+                                            <Input name="category" defaultValue={editingPost?.category} placeholder="Ex: Formação" className="rounded-xl h-11" required />
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Capa (URL)</label>
-                                            <Input name="image_url" defaultValue={editingPost?.image_url} placeholder="URL da imagem" className="rounded-xl" required />
+                                        <div>
+                                            <ImageUploader
+                                                name="image_url"
+                                                defaultValue={editingPost?.image_url || ""}
+                                                folder="noticias"
+                                                label="Imagem de Capa"
+                                                placeholder="https://exemplo.com/capa-noticia.jpg"
+                                                required
+                                                compact
+                                            />
                                         </div>
                                     </div>
                                     <div className="space-y-2">

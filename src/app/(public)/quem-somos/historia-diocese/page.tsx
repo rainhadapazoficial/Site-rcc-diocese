@@ -1,11 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import { Loader2, BookOpen, MapPin, History, Info } from "lucide-react";
+import { Loader2, History, Info } from "lucide-react";
+
+type HistoriaDioceseContent = {
+    hero: { title: string; subtitle: string; image_url: string };
+    section1: { title: string; description: string; content: string };
+    section2: { title: string; description: string; content: string };
+    image_url: string;
+};
 
 export default function HistoriaDiocesePage() {
-    const [content, setContent] = useState<any>(null);
+    const [content, setContent] = useState<HistoriaDioceseContent | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -90,10 +98,11 @@ export default function HistoriaDiocesePage() {
                         </div>
                         <div className="relative">
                             <div className="absolute -inset-4 bg-brand-gold/10 rounded-[3rem] -rotate-3" />
-                            <img
+                            <Image
                                 src={data.image_url}
                                 alt="Catedral de Sinop"
-                                className="relative rounded-[3rem] shadow-2xl w-full h-[500px] object-cover"
+                                fill
+                                className="relative rounded-[3rem] shadow-2xl object-cover"
                             />
                         </div>
                     </div>
@@ -124,15 +133,16 @@ export default function HistoriaDiocesePage() {
             <section className="py-20 bg-white">
                 <div className="max-w-7xl mx-auto px-4">
                     <div className="rounded-[4rem] overflow-hidden relative h-[400px] shadow-2xl group">
-                        <img
+                        <Image
                             src="https://images.unsplash.com/photo-1466096115517-bceecbfb6fde?q=80&w=2000"
                             alt="Diocese de Sinop"
-                            className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110"
+                            fill
+                            className="object-cover transform transition-transform duration-700 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-brand-blue/90 via-brand-blue/40 to-transparent flex items-center justify-center text-center p-8">
                             <div className="max-w-2xl">
                                 <h3 className="text-3xl font-bold text-white italic mb-6">Uma Igreja em Saída</h3>
-                                <p className="text-white/80 text-lg">"Ide por todo o mundo e pregai o Evangelho a toda criatura." (Mc 16, 15)</p>
+                                <p className="text-white/80 text-lg">&quot;Ide por todo o mundo e pregai o Evangelho a toda criatura.&quot; (Mc 16, 15)</p>
                             </div>
                         </div>
                     </div>

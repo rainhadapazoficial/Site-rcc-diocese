@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Settings, Cpu, ShieldCheck, Copy, Eye, EyeOff, Globe, Zap } from "lucide-react";
+import { Settings, Cpu, ShieldCheck, Zap } from "lucide-react";
 import { ConfigClient } from "./ConfigClient";
 
 export default function ConfigPage() {
-    const mcpToken = process.env.MCP_AUTH_TOKEN || "Não configurado";
-    const mcpUrl = "https://site-rcc-diocese.vercel.app/api/mcp";
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://site-rcc-diocese.vercel.app";
+    const mcpUrl = `${siteUrl.replace(/\/$/, "")}/api/mcp`;
 
     return (
         <div className="p-8 space-y-8 animate-in fade-in duration-500">
@@ -34,7 +34,7 @@ export default function ConfigPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="p-8 space-y-6">
-                        <ConfigClient mcpUrl={mcpUrl} mcpToken={mcpToken} />
+                        <ConfigClient mcpUrl={mcpUrl} />
                     </CardContent>
                 </Card>
 

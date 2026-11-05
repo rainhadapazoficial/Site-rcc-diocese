@@ -18,7 +18,7 @@ export function PageTracker() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ slug: pathname || '/' })
                 });
-            } catch (e) {
+            } catch {
                 // Silencioso em caso de erro para não afetar o usuário
                 console.warn("Analytics ping failed");
             }

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, Loader2, CheckCircle2, GraduationCap, Play, Download } from "lucide-react";
+import { ImageUploader } from "@/components/admin/ImageUploader";
 
 interface FormacaoAdminClientProps {
     initialData: any;
@@ -132,14 +133,13 @@ export function FormacaoAdminClient({ initialData }: FormacaoAdminClientProps) {
                             </div>
                         </div>
                         <div className="space-y-4">
-                            <div className="space-y-2">
-                                <Label>URL da Imagem de Fundo</Label>
-                                <Input
-                                    value={formData.hero.image_url}
-                                    onChange={(e) => setFormData({ ...formData, hero: { ...formData.hero, image_url: e.target.value } })}
-                                    className="rounded-xl"
-                                />
-                            </div>
+                            <ImageUploader
+                                label="Imagem de Fundo (Hero)"
+                                value={formData.hero.image_url || ""}
+                                onChange={(url) => setFormData({ ...formData, hero: { ...formData.hero, image_url: url } })}
+                                folder="banners"
+                                aspectRatio="banner"
+                            />
                         </div>
                     </CardContent>
                 </Card>

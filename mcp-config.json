@@ -1,11 +1,11 @@
 {
     "mcpServers": {
-        "rainha-da-paz-manager": {
+        "rcc-sinop-manager": {
             "command": "curl",
             "args": [
                 "-X",
                 "POST",
-                "https://site-rcc-rainhadapaz.vercel.app/api/mcp",
+                "https://site-rcc-diocese.vercel.app/api/mcp",
                 "-H",
                 "Content-Type: application/json",
                 "-H",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,24 +15,44 @@ export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
+    useEffect(() => {
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
+            if (session?.access_token) {
+                await fetch("/api/auth/session", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ access_token: session.access_token }),
+                });
+                router.replace("/admin/dashboard");
+            }
+        });
+    }, [router]);
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         setError(null);
 
         try {
-            const { error: authError } = await supabase.auth.signInWithPassword({
+            const { data, error: authError } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             });
 
             if (authError) {
-                console.error("DEBUG AUTH ERROR:", authError);
-                setError(authError.message + " (Code: " + (authError.status || "unknown") + ")");
+                setError("Credenciais inválidas. Verifique seu e-mail e senha.");
             } else {
+                if (data.session?.access_token) {
+                    await fetch("/api/auth/session", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ access_token: data.session.access_token }),
+                    });
+                }
                 router.push("/admin/dashboard");
+                router.refresh();
             }
-        } catch (err) {
+        } catch {
             setError("Ocorreu um erro ao tentar entrar.");
         } finally {
             setIsLoading(false);

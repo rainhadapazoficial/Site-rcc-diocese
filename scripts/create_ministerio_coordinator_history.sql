@@ -25,10 +25,10 @@ CREATE INDEX IF NOT EXISTS idx_ministerio_coordinator_history_ordem
 ALTER TABLE public.ministerio_coordinator_history ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow public read on ministry coordinator history"
-    ON public.ministerio_coordinator_history FOR SELECT USING (true);
+    ON public.ministerio_coordinator_history FOR SELECT TO anon, authenticated USING (true);
 
 CREATE POLICY "Allow admin full access on ministry coordinator history"
-    ON public.ministerio_coordinator_history FOR ALL USING (true);
+    ON public.ministerio_coordinator_history FOR ALL TO authenticated USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
 
 COMMENT ON TABLE public.ministerio_coordinator_history IS 'Histórico de coordenadores por gestão em cada ministério';
 COMMENT ON COLUMN public.ministerio_coordinator_history.gestao IS 'Período da gestão, ex: 2020-2022, 2022-2024, 2024-atual';

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Save, Loader2, Image as ImageIcon, History, Globe, Info, CheckCircle2 } from "lucide-react";
+import { ImageUploader } from "@/components/admin/ImageUploader";
 
 interface DioceseAdminClientProps {
     initialData: any;
@@ -103,10 +104,13 @@ export function DioceseAdminClient({ initialData }: DioceseAdminClientProps) {
                             <label className="text-sm font-medium">Subtítulo</label>
                             <Input value={formData.hero.subtitle} onChange={(e) => updateHero("subtitle", e.target.value)} />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">URL da Imagem de Fundo</label>
-                            <Input value={formData.hero.image_url} onChange={(e) => updateHero("image_url", e.target.value)} />
-                        </div>
+                        <ImageUploader
+                            label="Imagem de Fundo (Hero)"
+                            value={formData.hero.image_url || ""}
+                            onChange={(url) => updateHero("image_url", url)}
+                            folder="banners"
+                            aspectRatio="banner"
+                        />
                     </CardContent>
                 </Card>
 
@@ -167,15 +171,12 @@ export function DioceseAdminClient({ initialData }: DioceseAdminClientProps) {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">URL da Imagem Lateral</label>
-                            <Input value={formData.image_url} onChange={(e) => setFormData({ ...formData, image_url: e.target.value })} />
-                        </div>
-                        {formData.image_url && (
-                            <div className="mt-4 rounded-xl overflow-hidden h-40 border">
-                                <img src={formData.image_url} alt="Preview" className="w-full h-full object-cover" />
-                            </div>
-                        )}
+                        <ImageUploader
+                            label="Imagem Lateral Destacada"
+                            value={formData.image_url || ""}
+                            onChange={(url) => setFormData({ ...formData, image_url: url })}
+                            folder="galerias"
+                        />
                     </CardContent>
                 </Card>
             </div>

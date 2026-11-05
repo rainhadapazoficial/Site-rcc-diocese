@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
@@ -18,13 +18,14 @@ import CharacterCount from "@tiptap/extension-character-count";
 
 import {
     Bold, Italic, Underline as UnderlineIcon,
-    AlignLeft, AlignCenter, AlignRight, AlignJustify,
-    List, ListOrdered, Quote, Heading1, Heading2, Heading3,
-    Link as LinkIcon, Image as ImageIcon, Youtube as YoutubeIcon,
+    AlignLeft, AlignCenter, AlignRight,
+    List, ListOrdered, Quote, Heading1,
+    ImageIcon,
     Table as TableIcon, Palette, Highlighter,
-    Undo, Redo, Code, Scissors, Eraser
+    Undo, Redo, Eraser
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { uploadAdminImage } from "@/lib/storage-client";
+import { validateExternalImageUrl } from "@/lib/upload-validation";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -38,31 +39,37 @@ interface PremiumEditorProps {
     onChange: (html: string) => void;
 }
 
-const MenuBar = ({ editor }: { editor: any }) => {
+const MenuBar = ({ editor }: { editor: Editor | null }) => {
     if (!editor) return null;
 
-    const addImage = async () => {
+    const addImageFromUpload = async () => {
         const input = document.createElement("input");
         input.type = "file";
-        input.accept = "image/*";
+        input.accept = ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp";
         input.onchange = async () => {
             if (input.files?.length) {
                 const file = input.files[0];
-                const fileExt = file.name.split(".").pop();
-                const fileName = `${Math.random()}.${fileExt}`;
-                const filePath = `editor/${fileName}`;
-
-                const { error: uploadError } = await supabase.storage
-                    .from("media")
-                    .upload(filePath, file);
-
-                if (uploadError) return;
-
-                const { data } = supabase.storage.from("media").getPublicUrl(filePath);
-                editor.chain().focus().setImage({ src: data.publicUrl }).run();
+                try {
+                    const publicUrl = await uploadAdminImage(file, "galerias");
+                    editor.chain().focus().setImage({ src: publicUrl }).run();
+                } catch (err: unknown) {
+                    const msg = err instanceof Error ? err.message : "Erro ao enviar imagem.";
+                    alert(msg);
+                }
             }
         };
         input.click();
+    };
+
+    const addImageFromUrl = () => {
+        const rawUrl = window.prompt("Cole a URL da imagem (https://...):");
+        if (!rawUrl) return;
+        const validation = validateExternalImageUrl(rawUrl);
+        if (!validation.valid) {
+            alert(validation.error || "URL de imagem inválida.");
+            return;
+        }
+        editor.chain().focus().setImage({ src: validation.url }).run();
     };
 
     return (
@@ -163,9 +170,21 @@ const MenuBar = ({ editor }: { editor: any }) => {
                         <DropdownMenuItem className="col-span-4 justify-center" onClick={() => editor.chain().focus().unsetColor().run()}>Limpar</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="ghost" size="sm" onClick={addImage}>
-                    <ImageIcon className="w-4 h-4" />
-                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button type="button" variant="ghost" size="sm" title="Inserir imagem">
+                            <ImageIcon className="w-4 h-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuItem onClick={addImageFromUpload}>
+                            Fazer Upload (JPG, PNG, WebP)
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={addImageFromUrl}>
+                            Inserir Link (URL)
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
                 <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>
                     <TableIcon className="w-4 h-4" />
                 </Button>

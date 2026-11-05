@@ -11,10 +11,11 @@ BEGIN
         EXECUTE format('DROP POLICY %I ON public.events', pol.policyname);
     END LOOP;
 END $$;
-CREATE POLICY "Admin All Access Events" ON public.events FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public Read Events" ON public.events FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Admin All Access Events" ON public.events FOR ALL TO authenticated USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
 
 
--- 2. GALERIA: Limpa regras antigas e libera geral para Admin
+-- 2. GALERIA: Limpa regras antigas e libera geral para Admin autenticado
 ALTER TABLE public.gallery ENABLE ROW LEVEL SECURITY;
 DO $$ 
 DECLARE pol record;
@@ -24,7 +25,8 @@ BEGIN
         EXECUTE format('DROP POLICY %I ON public.gallery', pol.policyname);
     END LOOP;
 END $$;
-CREATE POLICY "Admin All Access Gallery" ON public.gallery FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public Read Gallery" ON public.gallery FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Admin All Access Gallery" ON public.gallery FOR ALL TO authenticated USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
 
 
 -- 3. STORAGE: Garante que o Admin pode apagar as imagens do bucket

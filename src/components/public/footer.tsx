@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Facebook, Instagram, Youtube, Mail, Phone, MapPin, Radio, MessageCircle } from "lucide-react";
+import Image from "next/image";
+import { Facebook, Instagram, Youtube, Mail, Phone, MapPin, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function Footer() {
@@ -10,10 +11,12 @@ export function Footer() {
                     {/* Logo & Info */}
                     <div className="space-y-6">
                         <div className="flex items-center gap-3">
-                            <img
+                            <Image
                                 src="/logo-diocese.png"
                                 alt="RCC Diocese de Sinop Logo"
-                                className="w-14 h-14 object-contain"
+                                width={56}
+                                height={56}
+                                className="object-contain"
                             />
                         </div>
                         <p className="text-blue-100 text-sm leading-relaxed">

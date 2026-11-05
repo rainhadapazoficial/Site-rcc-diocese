@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Menu, X, MessageCircle, ChevronDown, Instagram, Facebook, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -53,42 +54,41 @@ export function Navbar() {
     const [navLinks, setNavLinks] = useState<NavItem[]>(defaultNavLinks);
 
     useEffect(() => {
-        console.log("Navbar: v2 (Dynamic Pages) loaded");
+        const fetchDynamicPages = async () => {
+            const { data, error } = await supabase
+                .from("custom_pages")
+                .select("title, slug, parent_menu")
+                .eq("is_published", true);
+
+            if (!error && data) {
+                const normalize = (str: string) =>
+                    str.toLowerCase()
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "")
+                        .replace(/\s+/g, "-");
+
+                const updatedLinks = defaultNavLinks.map(link => {
+                    const dynamicChildren = data
+                        .filter((p: { parent_menu: string | null; title: string; slug: string }) => normalize(p.parent_menu || "") === normalize(link.name))
+                        .map((p: { title: string; slug: string }) => ({
+                            name: p.title,
+                            href: p.slug === 'festa-rei-jesus' ? '/festa-rei-jesus' : `/p/${p.slug}`
+                        }));
+
+                    if (dynamicChildren.length > 0) {
+                        return {
+                            ...link,
+                            children: [...(link.children || []), ...dynamicChildren]
+                        };
+                    }
+                    return link;
+                });
+                setNavLinks(updatedLinks);
+            }
+        };
+
         fetchDynamicPages();
     }, []);
-
-    const fetchDynamicPages = async () => {
-        const { data, error } = await supabase
-            .from("custom_pages")
-            .select("title, slug, parent_menu")
-            .eq("is_published", true);
-
-        if (!error && data) {
-            const normalize = (str: string) =>
-                str.toLowerCase()
-                    .normalize("NFD")
-                    .replace(/[\u0300-\u036f]/g, "")
-                    .replace(/\s+/g, "-");
-
-            const updatedLinks = defaultNavLinks.map(link => {
-                const dynamicChildren = data
-                    .filter((p: { parent_menu: string | null; title: string; slug: string }) => normalize(p.parent_menu || "") === normalize(link.name))
-                    .map((p: { title: string; slug: string }) => ({
-                        name: p.title,
-                        href: p.slug === 'festa-rei-jesus' ? '/festa-rei-jesus' : `/p/${p.slug}`
-                    }));
-
-                if (dynamicChildren.length > 0) {
-                    return {
-                        ...link,
-                        children: [...(link.children || []), ...dynamicChildren]
-                    };
-                }
-                return link;
-            });
-            setNavLinks(updatedLinks);
-        }
-    };
 
     const toggleMobileSubmenu = (name: string) => {
         setMobileSubmenu(mobileSubmenu === name ? null : name);
@@ -100,10 +100,12 @@ export function Navbar() {
                 <div className="flex justify-between h-20 items-center">
                     <div className="flex-shrink-0 flex items-center">
                         <Link href="/" className="flex items-center gap-3">
-                            <img
+                            <Image
                                 src="/logo-diocese.png"
                                 alt="RCC Diocese de Sinop Logo"
-                                className="w-16 h-16 object-contain"
+                                width={64}
+                                height={64}
+                                className="object-contain"
                             />
                         </Link>
                     </div>

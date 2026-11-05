@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { ImageUploader } from "@/components/admin/ImageUploader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -71,54 +72,6 @@ export default function MinisteriosAdminPage() {
             return next;
         });
     }
-
-    const handleHistoryImageUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsUploading(true);
-        const fileExt = file.name.split(".").pop();
-        const fileName = `hist_${Math.random()}.${fileExt}`;
-        const filePath = `ministerios/photos/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-            .from("media")
-            .upload(filePath, file);
-
-        if (uploadError) {
-            alert("Erro ao enviar imagem do histórico: " + uploadError.message);
-            setIsUploading(false);
-            return;
-        }
-
-        const { data } = supabase.storage.from("media").getPublicUrl(filePath);
-        updateCoordinatorHistoryRow(index, "imagem_url", data.publicUrl);
-        setIsUploading(false);
-    };
-
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsUploading(true);
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `ministerios/photos/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-            .from("media")
-            .upload(filePath, file);
-
-        if (uploadError) {
-            alert("Erro ao enviar imagem: " + uploadError.message);
-            setIsUploading(false);
-            return;
-        }
-
-        const { data } = supabase.storage.from("media").getPublicUrl(filePath);
-        setFormData((prev: any) => ({ ...prev, imagem_url: data.publicUrl }));
-        setIsUploading(false);
-    };
 
     function removeCoordinatorHistoryRow(index: number) {
         setCoordinatorHistory((prev) => prev.filter((_, i) => i !== index));
@@ -277,57 +230,14 @@ export default function MinisteriosAdminPage() {
                                         <Input name="bienio" defaultValue={editingMinistry?.bienio} placeholder="Ex: 2025-2026" className="rounded-xl" />
                                     </div>
 
-                                    <div className="space-y-4 col-span-2 bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">
-                                        <div className="flex items-center justify-between">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                                <ImageIcon className="w-4 h-4 text-brand-blue" />
-                                                Foto / Banner do Ministério
-                                            </label>
-                                            <div className="flex gap-2">
-                                                <Input
-                                                    type="file"
-                                                    id="file-upload"
-                                                    className="hidden"
-                                                    accept="image/*"
-                                                    onChange={handleImageUpload}
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    disabled={isUploading}
-                                                    onClick={() => document.getElementById('file-upload')?.click()}
-                                                    className="rounded-xl border-brand-blue/20 text-brand-blue hover:bg-brand-blue hover:text-white"
-                                                >
-                                                    {isUploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
-                                                    Fazer Upload
-                                                </Button>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="space-y-3">
-                                            {formData.imagem_url && (
-                                                <div className="w-full h-40 rounded-2xl overflow-hidden border-2 border-white shadow-md relative">
-                                                    <img src={formData.imagem_url} alt="Preview" className="w-full h-full object-cover" />
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => setFormData({ ...formData, imagem_url: "" })}
-                                                        className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow-lg"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            )}
-                                            <div className="space-y-1">
-                                                <p className="text-[9px] uppercase font-bold text-gray-400 px-1">Ou cole o link da foto</p>
-                                                <Input
-                                                    placeholder="https://exemplo.com/foto.jpg"
-                                                    value={formData.imagem_url || ""}
-                                                    onChange={(e) => setFormData({ ...formData, imagem_url: e.target.value })}
-                                                    className="rounded-xl h-10 text-xs bg-white/50"
-                                                />
-                                            </div>
-                                        </div>
+                                    <div className="col-span-2 bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">
+                                        <ImageUploader
+                                            label="Foto / Banner do Ministério"
+                                            value={formData.imagem_url || ""}
+                                            onChange={(url) => setFormData({ ...formData, imagem_url: url })}
+                                            folder="ministerios"
+                                            placeholder="https://exemplo.com/foto.jpg"
+                                        />
                                     </div>
 
                                     <div className="space-y-2">
@@ -358,64 +268,32 @@ export default function MinisteriosAdminPage() {
                                         <div className="grid grid-cols-1 gap-4">
                                             {coordinatorHistory.map((row, index) => (
                                                 <div key={index} className="flex flex-col gap-4 rounded-[2rem] border bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-                                                    <div className="flex gap-4 items-center">
-                                                        {/* Avatar/Photo Section */}
-                                                        <div className="relative group shrink-0">
-                                                            {row.imagem_url ? (
-                                                                <img src={row.imagem_url} alt="Preview" className="w-16 h-16 rounded-2xl object-cover border-2 border-brand-blue/10 shadow-sm" />
-                                                            ) : (
-                                                                <div className="w-16 h-16 rounded-2xl bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 gap-1">
-                                                                    <ImageIcon className="w-6 h-6 opacity-30" />
-                                                                    <span className="text-[8px] font-bold uppercase">Foto</span>
-                                                                </div>
-                                                            )}
-                                                            <input
-                                                                type="file"
-                                                                id={`hist-file-${index}`}
-                                                                className="hidden"
-                                                                accept="image/*"
-                                                                onChange={(e) => handleHistoryImageUpload(index, e)}
-                                                            />
-                                                            <button 
-                                                                type="button"
-                                                                onClick={() => document.getElementById(`hist-file-${index}`)?.click()}
-                                                                className="absolute -bottom-1 -right-1 w-7 h-7 bg-brand-blue text-white rounded-xl flex items-center justify-center shadow-lg hover:bg-brand-gold transition-colors border-2 border-white"
-                                                                title="Subir foto"
-                                                            >
-                                                                <Plus className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
-
-                                                        {/* Inputs Section */}
-                                                        <div className="flex-1 space-y-3">
-                                                            <div className="flex gap-2">
-                                                                <Input
-                                                                    placeholder="Nome completo do coordenador"
-                                                                    value={row.nome}
-                                                                    onChange={(e) => updateCoordinatorHistoryRow(index, "nome", e.target.value)}
-                                                                    className="rounded-xl flex-1 h-11"
-                                                                />
-                                                                <Input
-                                                                    placeholder="Biênio (ex: 2020-2022)"
-                                                                    value={row.gestao}
-                                                                    onChange={(e) => updateCoordinatorHistoryRow(index, "gestao", e.target.value)}
-                                                                    className="rounded-xl w-36 h-11 text-center font-bold"
-                                                                />
-                                                                <Button type="button" variant="ghost" size="icon" onClick={() => removeCoordinatorHistoryRow(index)} className="text-gray-300 hover:text-red-500 shrink-0">
-                                                                    <Trash2 className="w-5 h-5" />
-                                                                </Button>
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <p className="text-[9px] uppercase font-bold text-gray-400 px-1 italic">Ou cole o link da foto do coordenador</p>
-                                                                <Input
-                                                                    placeholder="https://exemplo.com/foto-perfil.jpg"
-                                                                    value={row.imagem_url || ""}
-                                                                    onChange={(e) => updateCoordinatorHistoryRow(index, "imagem_url", e.target.value)}
-                                                                    className="rounded-lg h-9 text-xs bg-gray-50/50 border-dashed"
-                                                                />
-                                                            </div>
-                                                        </div>
+                                                    <div className="flex gap-2 items-center">
+                                                        <Input
+                                                            placeholder="Nome completo do coordenador"
+                                                            value={row.nome}
+                                                            onChange={(e) => updateCoordinatorHistoryRow(index, "nome", e.target.value)}
+                                                            className="rounded-xl flex-1 h-11"
+                                                        />
+                                                        <Input
+                                                            placeholder="Biênio (ex: 2020-2022)"
+                                                            value={row.gestao}
+                                                            onChange={(e) => updateCoordinatorHistoryRow(index, "gestao", e.target.value)}
+                                                            className="rounded-xl w-36 h-11 text-center font-bold"
+                                                        />
+                                                        <Button type="button" variant="ghost" size="icon" onClick={() => removeCoordinatorHistoryRow(index)} className="text-gray-300 hover:text-red-500 shrink-0">
+                                                            <Trash2 className="w-5 h-5" />
+                                                        </Button>
                                                     </div>
+                                                    <ImageUploader
+                                                        label="Foto do Coordenador"
+                                                        placeholder="https://exemplo.com/foto-perfil.jpg"
+                                                        value={row.imagem_url || ""}
+                                                        onChange={(url) => updateCoordinatorHistoryRow(index, "imagem_url", url)}
+                                                        folder="pessoas"
+                                                        aspectRatio="square"
+                                                        compact
+                                                    />
                                                 </div>
                                             ))}
                                         </div>

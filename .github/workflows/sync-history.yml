@@ -33,9 +33,15 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          INPUT_ALL: ${{ github.event.inputs.all }}
+          INPUT_PAGES: ${{ github.event.inputs.pages }}
         run: |
-          if [ "${{ github.event.inputs.all }}" = "true" ]; then
+          if [ "$INPUT_ALL" = "true" ]; then
             npx tsx scripts/sync-rcc-history.ts --all
           else
-            npx tsx scripts/sync-rcc-history.ts --pages=${{ github.event.inputs.pages }}
+            if ! [[ "$INPUT_PAGES" =~ ^[0-9]+$ ]]; then
+              echo "Erro: O parâmetro 'pages' deve conter apenas números inteiros."
+              exit 1
+            fi
+            npx tsx scripts/sync-rcc-history.ts --pages="$INPUT_PAGES"
           fi
