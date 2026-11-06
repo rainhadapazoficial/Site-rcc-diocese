@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Calendar, ChevronLeft, ChevronRight, MapPin, Loader2 } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, MapPin, Loader2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const MESES = [
@@ -53,6 +53,22 @@ export default function CalendarioPage() {
         const d2 = new Date(fim + (fim.includes('T') ? '' : 'T12:00:00'));
         const day2 = d2.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
         return `${day1} — ${day2}`;
+    }
+
+    function parseEventLink(ev: any): { cleanDesc: string; link: string | null } {
+        if (ev.link_inscricao) {
+            return { cleanDesc: ev.descricao || "", link: ev.link_inscricao };
+        }
+        const desc = ev.descricao || "";
+        const match = desc.match(/(https?:\/\/[^\s]+)/i);
+        if (!match) return { cleanDesc: desc, link: null };
+
+        const link = match[1];
+        const cleanDesc = desc
+            .replace(new RegExp(`(link(\\s+da)?\\s+inscrição:?\\s*)?${link.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'gi'), '')
+            .trim();
+
+        return { cleanDesc, link };
     }
 
     const getCat = (cat: string) => CATEGORIAS[cat] || CATEGORIAS.diocesano;
@@ -153,26 +169,41 @@ export default function CalendarioPage() {
                                         <div className="space-y-3">
                                             {monthEvents.map((ev: any) => {
                                                 const cat = getCat(ev.categoria);
+                                                const { cleanDesc, link } = parseEventLink(ev);
                                                 return (
                                                     <div key={ev.id} className={`${cat.bg} rounded-2xl p-5 border border-transparent hover:border-gray-200 hover:shadow-md transition-all`}>
-                                                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                                                             {/* Date badge */}
-                                                            <div className="flex-shrink-0 bg-white rounded-xl px-4 py-2 text-center shadow-sm min-w-[130px]">
+                                                            <div className="flex-shrink-0 bg-white rounded-xl px-4 py-2.5 text-center shadow-sm min-w-[130px]">
                                                                 <span className="text-sm font-bold text-gray-800">
                                                                     {formatDateRange(ev.data_inicio, ev.data_fim)}
                                                                 </span>
                                                             </div>
                                                             {/* Content */}
-                                                            <div className="flex-1">
+                                                            <div className="flex-1 min-w-0">
                                                                 <h3 className={`font-bold text-lg ${cat.text}`}>{ev.titulo}</h3>
-                                                                {ev.descricao && (
-                                                                    <p className="text-gray-500 text-sm mt-1">{ev.descricao}</p>
+                                                                {cleanDesc && (
+                                                                    <p className="text-gray-600 text-sm mt-1">{cleanDesc}</p>
                                                                 )}
                                                             </div>
-                                                            {/* Category badge */}
-                                                            <span className={`flex-shrink-0 text-xs font-bold uppercase px-3 py-1 rounded-full text-white ${cat.dot}`}>
-                                                                {cat.label}
-                                                            </span>
+                                                            {/* Actions & Category badge */}
+                                                            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                                                                {link && (
+                                                                    <a
+                                                                        href={link}
+                                                                        target={link.startsWith("http") ? "_blank" : "_self"}
+                                                                        rel="noopener noreferrer"
+                                                                    >
+                                                                        <Button size="sm" className="bg-brand-gold hover:bg-brand-gold/90 text-white font-bold rounded-xl text-xs gap-1.5 shadow-sm h-9 px-4">
+                                                                            <span>Inscrever-se / LP</span>
+                                                                            <ExternalLink className="w-3.5 h-3.5" />
+                                                                        </Button>
+                                                                    </a>
+                                                                )}
+                                                                <span className={`text-xs font-bold uppercase px-3 py-1.5 rounded-full text-white ${cat.dot}`}>
+                                                                    {cat.label}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 );

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import {
     Plus, Search, Trash2, Edit, Loader2,
-    XCircle, Calendar, MapPin
+    XCircle, Calendar, MapPin, Link as LinkIcon, ExternalLink
 } from "lucide-react";
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -29,6 +29,30 @@ const CATEGORIAS = [
     { value: "estadual", label: "Estadual", color: "bg-red-600" },
     { value: "nacional", label: "Nacional", color: "bg-gray-600" },
 ];
+
+function extractLinkFromDescricao(desc?: string | null): { cleanDesc: string; link: string } {
+    if (!desc) return { cleanDesc: "", link: "" };
+    const urlMatch = desc.match(/(https?:\/\/[^\s]+)/i);
+    if (!urlMatch) return { cleanDesc: desc, link: "" };
+
+    const link = urlMatch[1];
+    const cleanDesc = desc
+        .replace(new RegExp(`(link(\\s+da)?\\s+inscrição:?\\s*)?${link.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'gi'), '')
+        .trim();
+
+    return { cleanDesc, link };
+}
+
+function buildDescricaoWithLink(desc?: string | null, link?: string | null): string | null {
+    const cleanDesc = (desc || "").trim();
+    const cleanLink = (link || "").trim();
+
+    if (!cleanLink) return cleanDesc || null;
+    if (!cleanDesc) return `Link Inscrição: ${cleanLink}`;
+    if (cleanDesc.includes(cleanLink)) return cleanDesc;
+
+    return `${cleanDesc}\n\nLink Inscrição: ${cleanLink}`;
+}
 
 export default function CalendarioAdminPage() {
     const [events, setEvents] = useState<any[]>([]);
@@ -62,17 +86,21 @@ export default function CalendarioAdminPage() {
         setIsSubmitting(true);
 
         const dataInicio = formData.data_inicio;
-        const mes = dataInicio ? new Date(dataInicio).getMonth() + 1 : 1;
-        const ano = dataInicio ? new Date(dataInicio).getFullYear() : filterYear;
+        const mes = dataInicio ? new Date(dataInicio + (dataInicio.includes('T') ? '' : 'T12:00:00')).getMonth() + 1 : 1;
+        const ano = dataInicio ? new Date(dataInicio + (dataInicio.includes('T') ? '' : 'T12:00:00')).getFullYear() : filterYear;
 
-        const eventData = {
+        const cleanLink = (formData.link_inscricao || "").trim();
+        const mergedDescricao = buildDescricaoWithLink(formData.descricao, cleanLink);
+
+        const eventData: any = {
             titulo: formData.titulo,
             data_inicio: formData.data_inicio,
             data_fim: formData.data_fim || null,
             mes,
             ano,
             categoria: formData.categoria || "diocesano",
-            descricao: formData.descricao || null,
+            descricao: mergedDescricao,
+            link_inscricao: cleanLink || null,
         };
 
         let result;
@@ -85,6 +113,21 @@ export default function CalendarioAdminPage() {
             result = await supabase
                 .from("calendario_diocesano")
                 .insert([eventData]);
+        }
+
+        // Se a coluna link_inscricao ainda não foi criada no Supabase, salva mesclando em descricao
+        if (result.error && (result.error.message?.includes("link_inscricao") || result.error.code === "PGRST204" || result.error.code === "42703")) {
+            delete eventData.link_inscricao;
+            if (editingEvent) {
+                result = await supabase
+                    .from("calendario_diocesano")
+                    .update(eventData)
+                    .eq("id", editingEvent.id);
+            } else {
+                result = await supabase
+                    .from("calendario_diocesano")
+                    .insert([eventData]);
+            }
         }
 
         if (result.error) {
@@ -107,13 +150,23 @@ export default function CalendarioAdminPage() {
 
     const openEdit = (event: any) => {
         setEditingEvent(event);
-        setFormData(event);
+        const { cleanDesc, link } = extractLinkFromDescricao(event.descricao);
+        setFormData({
+            ...event,
+            descricao: event.link_inscricao ? (event.descricao || "") : (cleanDesc || ""),
+            link_inscricao: event.link_inscricao || link || "",
+        });
         setIsDialogOpen(true);
     };
 
     const openNew = () => {
         setEditingEvent(null);
-        setFormData({ categoria: "diocesano", ano: filterYear });
+        setFormData({
+            categoria: "diocesano",
+            ano: filterYear,
+            link_inscricao: "",
+            descricao: "",
+        });
         setIsDialogOpen(true);
     };
 
@@ -247,6 +300,23 @@ export default function CalendarioAdminPage() {
                                 </div>
 
                                 <div className="space-y-2">
+                                    <Label className="flex items-center gap-1.5 font-bold text-brand-blue">
+                                        <LinkIcon className="w-4 h-4 text-brand-gold" />
+                                        Link da Landing Page / Inscrição (Opcional)
+                                    </Label>
+                                    <Input
+                                        type="url"
+                                        placeholder="Ex: https://eventos.sistemaprover.com.br/... ou /festa-rei-jesus"
+                                        value={formData.link_inscricao || ""}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, link_inscricao: e.target.value })}
+                                        className="rounded-xl h-11"
+                                    />
+                                    <p className="text-[11px] text-gray-400">
+                                        Insira o link oficial de inscrições ou Landing Page do evento para que o botão apareça aos fiéis no site.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-2">
                                     <Label>Descrição (Opcional)</Label>
                                     <Textarea
                                         placeholder="Detalhes do evento..."
@@ -298,32 +368,53 @@ export default function CalendarioAdminPage() {
                                     {MESES[mesNum - 1]}
                                 </h2>
                                 <div className="space-y-2">
-                                    {byMonth[mesNum].map((ev: any) => (
-                                        <div key={ev.id} className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border hover:shadow-md transition-all group">
-                                            <div className={`w-2 h-12 rounded-full ${getCatColor(ev.categoria)} flex-shrink-0`}></div>
-                                            <div className="flex-1 min-w-0">
-                                                <h3 className="font-bold text-gray-900 truncate">{ev.titulo}</h3>
-                                                <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 mt-1">
-                                                    <span className="flex items-center gap-1">
-                                                        <Calendar className="w-3 h-3" />
-                                                        {formatDate(ev.data_inicio)}
-                                                        {ev.data_fim && ` — ${formatDate(ev.data_fim)}`}
-                                                    </span>
-                                                    <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded-full text-white ${getCatColor(ev.categoria)}`}>
-                                                        {getCatLabel(ev.categoria)}
-                                                    </span>
+                                    {byMonth[mesNum].map((ev: any) => {
+                                        const { cleanDesc, link } = extractLinkFromDescricao(ev.descricao);
+                                        const eventLink = ev.link_inscricao || link;
+                                        return (
+                                            <div key={ev.id} className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border hover:shadow-md transition-all group">
+                                                <div className={`w-2 h-12 rounded-full ${getCatColor(ev.categoria)} flex-shrink-0`}></div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="font-bold text-gray-900 truncate">{ev.titulo}</h3>
+                                                    <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 mt-1">
+                                                        <span className="flex items-center gap-1">
+                                                            <Calendar className="w-3 h-3" />
+                                                            {formatDate(ev.data_inicio)}
+                                                            {ev.data_fim && ` — ${formatDate(ev.data_fim)}`}
+                                                        </span>
+                                                        <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded-full text-white ${getCatColor(ev.categoria)}`}>
+                                                            {getCatLabel(ev.categoria)}
+                                                        </span>
+                                                        {cleanDesc && (
+                                                            <span className="text-xs text-gray-400 truncate max-w-xs">
+                                                                {cleanDesc}
+                                                            </span>
+                                                        )}
+                                                        {eventLink && (
+                                                            <a
+                                                                href={eventLink}
+                                                                target={eventLink.startsWith("http") ? "_blank" : "_self"}
+                                                                rel="noopener noreferrer"
+                                                                className="inline-flex items-center gap-1 text-xs font-bold text-brand-blue hover:text-brand-gold bg-brand-blue/5 hover:bg-brand-blue/10 px-2.5 py-0.5 rounded-full transition-colors border border-brand-blue/10"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                <ExternalLink className="w-3 h-3" />
+                                                                LP / Inscrição
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Button variant="ghost" size="icon" onClick={() => openEdit(ev)} className="text-gray-400 hover:text-brand-blue rounded-xl h-8 w-8">
+                                                        <Edit className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => deleteEvent(ev.id)} className="text-gray-400 hover:text-red-500 rounded-xl h-8 w-8">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Button variant="ghost" size="icon" onClick={() => openEdit(ev)} className="text-gray-400 hover:text-brand-blue rounded-xl h-8 w-8">
-                                                    <Edit className="w-4 h-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => deleteEvent(ev.id)} className="text-gray-400 hover:text-red-500 rounded-xl h-8 w-8">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         );

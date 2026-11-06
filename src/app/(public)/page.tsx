@@ -380,8 +380,17 @@ export default async function HomePage() {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                                     {calendarHighlights.map((cal: any) => {
                                         const b = parseEventBadge(cal.data_inicio);
+                                        const linkMatch = cal.descricao?.match(/(https?:\/\/[^\s]+)/i);
+                                        const targetLink = cal.link_inscricao || (linkMatch ? linkMatch[1] : "/calendario");
+                                        const isExternal = targetLink.startsWith("http");
                                         return (
-                                            <Link key={cal.id} href="/calendario" className="group bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-brand-gold/30 transition-all flex flex-col justify-between">
+                                            <Link
+                                                key={cal.id}
+                                                href={targetLink}
+                                                target={isExternal ? "_blank" : "_self"}
+                                                rel={isExternal ? "noopener noreferrer" : undefined}
+                                                className="group bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-brand-gold/30 transition-all flex flex-col justify-between"
+                                            >
                                                 <div>
                                                     <div className="flex items-center justify-between mb-3">
                                                         <span className="text-xs font-black text-brand-blue bg-brand-blue/10 px-2.5 py-1 rounded-lg">
@@ -394,6 +403,11 @@ export default async function HomePage() {
                                                     <p className="font-bold text-gray-900 text-sm line-clamp-2 group-hover:text-brand-blue transition-colors">
                                                         {cal.titulo}
                                                     </p>
+                                                    {isExternal && (
+                                                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-brand-gold mt-2 group-hover:underline">
+                                                            Inscrições / LP ↗
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </Link>
                                         );
