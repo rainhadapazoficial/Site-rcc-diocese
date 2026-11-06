@@ -99,7 +99,7 @@ async function getLatestEvents() {
             date: c.data_inicio,
             time: "Programação Diocesana",
             location: "Diocese de Sinop",
-            category: c.categoria === "diocesano" ? "Diocesano" : c.categoria === "estadual" ? "Estadual" : "Nacional",
+            category: c.categoria === "diocesano" ? "Diocesano" : c.categoria === "estadual" ? "Estadual" : (c.categoria === "grupo_oracao" || c.categoria === "grupo de oracao" || c.categoria === "grupo de oração" ? "Grupo de Oração" : "Nacional"),
             image_url: null,
             link: "/calendario",
             isCalendar: true,
@@ -397,7 +397,7 @@ export default async function HomePage() {
                                                             {b.day} {b.month}
                                                         </span>
                                                         <span className="text-[10px] font-bold uppercase text-gray-400">
-                                                            {cal.categoria}
+                                                            {cal.categoria === "grupo_oracao" || cal.categoria === "grupo de oracao" || cal.categoria === "grupo de oração" ? "Grupo de Oração" : cal.categoria}
                                                         </span>
                                                     </div>
                                                     <p className="font-bold text-gray-900 text-sm line-clamp-2 group-hover:text-brand-blue transition-colors">

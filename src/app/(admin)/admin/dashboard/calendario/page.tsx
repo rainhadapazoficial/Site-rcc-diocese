@@ -28,7 +28,15 @@ const CATEGORIAS = [
     { value: "diocesano", label: "Diocesano", color: "bg-brand-blue" },
     { value: "estadual", label: "Estadual", color: "bg-red-600" },
     { value: "nacional", label: "Nacional", color: "bg-gray-600" },
+    { value: "grupo_oracao", label: "Grupo de Oração", color: "bg-emerald-600" },
 ];
+
+function normalizeCategory(cat?: string | null): string {
+    if (!cat) return "diocesano";
+    const n = cat.toLowerCase().trim();
+    if (n === "grupo de oracao" || n === "grupo de oração" || n === "grupo-de-oracao") return "grupo_oracao";
+    return n;
+}
 
 function extractLinkFromDescricao(desc?: string | null): { cleanDesc: string; link: string } {
     if (!desc) return { cleanDesc: "", link: "" };
@@ -153,6 +161,7 @@ export default function CalendarioAdminPage() {
         const { cleanDesc, link } = extractLinkFromDescricao(event.descricao);
         setFormData({
             ...event,
+            categoria: normalizeCategory(event.categoria),
             descricao: event.link_inscricao ? (event.descricao || "") : (cleanDesc || ""),
             link_inscricao: event.link_inscricao || link || "",
         });
@@ -182,13 +191,15 @@ export default function CalendarioAdminPage() {
     });
 
     function getCatColor(cat: string) {
-        const c = CATEGORIAS.find(c => c.value === cat);
-        return c ? c.color : "bg-gray-400";
+        const norm = normalizeCategory(cat);
+        const c = CATEGORIAS.find(c => c.value === norm);
+        return c ? c.color : "bg-brand-blue";
     }
 
     function getCatLabel(cat: string) {
-        const c = CATEGORIAS.find(c => c.value === cat);
-        return c ? c.label : cat;
+        const norm = normalizeCategory(cat);
+        const c = CATEGORIAS.find(c => c.value === norm);
+        return c ? c.label : (cat || "Diocesano");
     }
 
     function formatDate(d: string) {
@@ -282,7 +293,7 @@ export default function CalendarioAdminPage() {
 
                                 <div className="space-y-2">
                                     <Label>Categoria</Label>
-                                    <Select value={formData.categoria || "diocesano"} onValueChange={(v: string) => setFormData({ ...formData, categoria: v })}>
+                                    <Select value={normalizeCategory(formData.categoria) || "diocesano"} onValueChange={(v: string) => setFormData({ ...formData, categoria: v })}>
                                         <SelectTrigger className="rounded-xl">
                                             <SelectValue />
                                         </SelectTrigger>

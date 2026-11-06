@@ -14,6 +14,7 @@ const CATEGORIAS: Record<string, { label: string; bg: string; text: string; dot:
     diocesano: { label: "Diocesano", bg: "bg-brand-blue/10", text: "text-brand-blue", dot: "bg-brand-blue" },
     estadual: { label: "Estadual", bg: "bg-red-50", text: "text-red-700", dot: "bg-red-600" },
     nacional: { label: "Nacional", bg: "bg-gray-100", text: "text-gray-700", dot: "bg-gray-600" },
+    grupo_oracao: { label: "Grupo de Oração", bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-600" },
 };
 
 export default function CalendarioPage() {
@@ -71,7 +72,14 @@ export default function CalendarioPage() {
         return { cleanDesc, link };
     }
 
-    const getCat = (cat: string) => CATEGORIAS[cat] || CATEGORIAS.diocesano;
+    const getCat = (cat: string) => {
+        if (!cat) return CATEGORIAS.diocesano;
+        const norm = cat.toLowerCase().trim();
+        if (norm === "grupo de oracao" || norm === "grupo de oração" || norm === "grupo_oracao" || norm === "grupo-de-oracao") {
+            return CATEGORIAS.grupo_oracao;
+        }
+        return CATEGORIAS[norm] || CATEGORIAS.diocesano;
+    };
 
     const displayMonths = selectedMonth !== null ? [selectedMonth] : Array.from({ length: 12 }, (_, i) => i + 1);
 

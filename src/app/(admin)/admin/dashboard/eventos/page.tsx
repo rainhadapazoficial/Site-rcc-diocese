@@ -283,11 +283,20 @@ export default function EventosAdminPage() {
                                         </label>
                                         <Input
                                             name="category"
+                                            list="event-categories"
                                             defaultValue={editingEvent?.category}
-                                            placeholder="Ex: Retiro, Grupo de Oração..."
+                                            placeholder="Ex: Grupo de Oração, Retiro..."
                                             className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
                                             required
                                         />
+                                        <datalist id="event-categories">
+                                            <option value="Grupo de Oração" />
+                                            <option value="Retiro" />
+                                            <option value="Encontro" />
+                                            <option value="Missa / Vigília" />
+                                            <option value="Formação" />
+                                            <option value="Congresso" />
+                                        </datalist>
                                     </div>
                                 </div>
 
