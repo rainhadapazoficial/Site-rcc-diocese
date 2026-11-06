@@ -47,10 +47,10 @@ export default function CalendarioPage() {
     });
 
     function formatDateRange(inicio: string, fim: string | null) {
-        const d1 = new Date(inicio);
+        const d1 = new Date(inicio + (inicio.includes('T') ? '' : 'T12:00:00'));
         const day1 = d1.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
         if (!fim) return day1;
-        const d2 = new Date(fim);
+        const d2 = new Date(fim + (fim.includes('T') ? '' : 'T12:00:00'));
         const day2 = d2.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
         return `${day1} — ${day2}`;
     }

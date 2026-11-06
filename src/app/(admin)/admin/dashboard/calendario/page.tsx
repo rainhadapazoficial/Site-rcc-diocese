@@ -140,7 +140,7 @@ export default function CalendarioAdminPage() {
 
     function formatDate(d: string) {
         if (!d) return "";
-        return new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+        return new Date(d + (d.includes('T') ? '' : 'T12:00:00')).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
     }
 
     return (
