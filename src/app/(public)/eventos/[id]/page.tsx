@@ -1,12 +1,27 @@
 import { supabase } from "@/lib/supabase";
 import parse from "html-react-parser";
 import { sanitizeHtml } from "@/lib/sanitize";
-import { Calendar, MapPin, Clock, ArrowLeft, Share2, Info } from "lucide-react";
+import { Calendar, MapPin, Clock, ArrowLeft, Share2, Info, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 export const revalidate = 60;
+
+function extractEventLink(event: any): { cleanDesc: string; link: string } {
+    const rawLink = event.link_inscricao;
+    const desc = event.description || "";
+    const markerMatch = desc.match(/<!--\s*lp_link:\s*([^\s>]+)\s*-->/);
+    const textMatch = desc.match(/(?:Link Inscrição|Link LP|Inscrição|Landing Page):\s*(https?:\/\/[^\s]+)/i);
+
+    const detectedLink = rawLink || (markerMatch ? markerMatch[1] : (textMatch ? textMatch[1] : ""));
+    const cleanDesc = desc
+        .replace(/<!--\s*lp_link:\s*[^\s>]+\s*-->\s*/g, "")
+        .replace(/(?:Link Inscrição|Link LP|Inscrição|Landing Page):\s*https?:\/\/[^\s]+/gi, "")
+        .trim();
+
+    return { cleanDesc, link: detectedLink };
+}
 
 async function getEvent(id: string) {
     const { data, error } = await supabase
@@ -27,7 +42,8 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         notFound();
     }
 
-    const dateObj = new Date(event.date);
+    const { cleanDesc, link } = extractEventLink(event);
+    const dateObj = new Date(event.date + (event.date?.includes('T') ? '' : 'T12:00:00'));
     const day = dateObj.toLocaleDateString('pt-BR', { day: '2-digit' });
     const month = dateObj.toLocaleDateString('pt-BR', { month: 'short' }).toUpperCase();
 
@@ -86,9 +102,9 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                                 <Info className="w-6 h-6 text-brand-gold" /> Sobre o Evento
                             </h2>
                             <div className="prose prose-sm sm:prose lg:prose-lg max-w-none prose-headings:text-brand-blue prose-img:rounded-3xl">
-                                {typeof event.description === 'string' && event.description.startsWith('<')
-                                    ? parse(sanitizeHtml(event.description))
-                                    : <p className="whitespace-pre-wrap">{event.description}</p>
+                                {typeof cleanDesc === 'string' && cleanDesc.startsWith('<')
+                                    ? parse(sanitizeHtml(cleanDesc))
+                                    : <p className="whitespace-pre-wrap">{cleanDesc}</p>
                                 }
                             </div>
                         </div>
@@ -99,15 +115,28 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                                 <h3 className="text-2xl font-bold text-brand-blue mb-2">Vai participar conosco?</h3>
                                 <p className="text-gray-600">Convide seus amigos e familiares para este momento de bênção.</p>
                             </div>
-                            <Button asChild className="bg-brand-blue text-white w-full md:w-auto h-14 px-8 rounded-2xl gap-2 font-bold shadow-xl shadow-brand-blue/20 transition-all hover:-translate-y-1">
-                                <a
-                                    href={`https://wa.me/?text=${encodeURIComponent(`Venha participar do evento "${event.title}" da RCC Diocese de Sinop! Local: ${event.location || "Sinop - MT"}`)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    <Share2 className="w-5 h-5" /> Compartilhar Convite
-                                </a>
-                            </Button>
+                            <div className="flex flex-wrap gap-4 items-center justify-center md:justify-end w-full md:w-auto">
+                                {link && (
+                                    <Button asChild className="bg-brand-gold hover:bg-brand-gold/90 text-white w-full sm:w-auto h-14 px-8 rounded-2xl gap-2 font-bold shadow-xl shadow-brand-gold/20 transition-all hover:-translate-y-1">
+                                        <a
+                                            href={link}
+                                            target={link.startsWith("http") ? "_blank" : undefined}
+                                            rel="noopener noreferrer"
+                                        >
+                                            <ExternalLink className="w-5 h-5" /> Inscrever-se / LP
+                                        </a>
+                                    </Button>
+                                )}
+                                <Button asChild className="bg-brand-blue text-white w-full sm:w-auto h-14 px-8 rounded-2xl gap-2 font-bold shadow-xl shadow-brand-blue/20 transition-all hover:-translate-y-1">
+                                    <a
+                                        href={`https://wa.me/?text=${encodeURIComponent(`Venha participar do evento "${event.title}" da RCC Diocese de Sinop! Local: ${event.location || "Sinop - MT"}`)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <Share2 className="w-5 h-5" /> Compartilhar Convite
+                                    </a>
+                                </Button>
+                            </div>
                         </div>
                     </div>
 
@@ -116,6 +145,22 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                         {event.image_url && (
                             <div className="rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white">
                                 <img src={event.image_url} alt={event.title} className="w-full h-auto" />
+                            </div>
+                        )}
+
+                        {link && (
+                            <div className="bg-gradient-to-br from-brand-gold/20 to-amber-500/10 p-8 rounded-[3rem] border-2 border-brand-gold text-center space-y-4 shadow-lg">
+                                <h4 className="text-xl font-bold text-brand-blue italic">Inscrições Abertas</h4>
+                                <p className="text-sm text-gray-600">Acesse a página oficial do evento para garantir sua vaga e conferir detalhes da programação.</p>
+                                <Button asChild className="w-full h-14 bg-brand-gold hover:bg-brand-gold/90 text-white font-bold rounded-2xl shadow-xl shadow-brand-gold/20 transition-all hover:-translate-y-1">
+                                    <a
+                                        href={link}
+                                        target={link.startsWith("http") ? "_blank" : undefined}
+                                        rel="noopener noreferrer"
+                                    >
+                                        <ExternalLink className="w-5 h-5 mr-2" /> Acessar Inscrição / LP
+                                    </a>
+                                </Button>
                             </div>
                         )}
 

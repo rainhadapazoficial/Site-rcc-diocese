@@ -19,7 +19,9 @@ import {
     CheckCircle2,
     XCircle,
     AlertCircle,
-    CalendarDays
+    CalendarDays,
+    Link as LinkIcon,
+    ExternalLink
 } from "lucide-react";
 import {
     Dialog,
@@ -33,6 +35,32 @@ import { PremiumEditor } from "@/components/admin/PremiumEditor";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import { deleteAdminStorageImage } from "@/lib/storage-client";
 
+function extractLinkFromDescricao(desc: string | null | undefined): { cleanDesc: string; link: string } {
+    if (!desc) return { cleanDesc: "", link: "" };
+    const markerMatch = desc.match(/<!--\s*lp_link:\s*([^\s>]+)\s*-->/);
+    if (markerMatch) {
+        return {
+            cleanDesc: desc.replace(/<!--\s*lp_link:\s*[^\s>]+\s*-->\s*/, "").trim(),
+            link: markerMatch[1],
+        };
+    }
+    const textMatch = desc.match(/(?:Link Inscrição|Link LP|Inscrição|Landing Page):\s*(https?:\/\/[^\s]+)/i);
+    if (textMatch) {
+        return {
+            cleanDesc: desc.replace(/(?:Link Inscrição|Link LP|Inscrição|Landing Page):\s*https?:\/\/[^\s]+/i, "").trim(),
+            link: textMatch[1],
+        };
+    }
+    return { cleanDesc: desc, link: "" };
+}
+
+function buildDescricaoWithLink(desc: string, link: string): string {
+    const clean = desc.replace(/<!--\s*lp_link:\s*[^\s>]+\s*-->\s*/g, "").replace(/(?:Link Inscrição|Link LP|Inscrição|Landing Page):\s*https?:\/\/[^\s]+/gi, "").trim();
+    if (!link || !link.trim()) return clean;
+    const trimmed = link.trim();
+    return `${clean}\n\n<!-- lp_link: ${trimmed} -->\nLink Inscrição: ${trimmed}`.trim();
+}
+
 export default function EventosAdminPage() {
     const [events, setEvents] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +68,7 @@ export default function EventosAdminPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<any>(null);
     const [editorContent, setEditorContent] = useState("");
+    const [linkInscricao, setLinkInscricao] = useState("");
 
     useEffect(() => {
         fetchEvents();
@@ -62,9 +91,23 @@ export default function EventosAdminPage() {
         setIsSubmitting(true);
 
         const formData = new FormData(e.currentTarget);
-        const eventData = {
+        const rawLink = ((formData.get("link_inscricao") as string) || "").trim();
+        const baseDescription = editorContent;
+
+        const eventDataWithCol: any = {
             title: formData.get("title"),
-            description: editorContent,
+            description: baseDescription,
+            date: formData.get("date"),
+            time: formData.get("time"),
+            location: formData.get("location"),
+            image_url: formData.get("image_url"),
+            category: formData.get("category"),
+            link_inscricao: rawLink || null,
+        };
+
+        const eventDataFallback: any = {
+            title: formData.get("title"),
+            description: buildDescricaoWithLink(baseDescription, rawLink),
             date: formData.get("date"),
             time: formData.get("time"),
             location: formData.get("location"),
@@ -76,12 +119,27 @@ export default function EventosAdminPage() {
         if (editingEvent) {
             result = await supabase
                 .from("events")
-                .update(eventData)
+                .update(eventDataWithCol)
                 .eq("id", editingEvent.id);
+
+            // Fallback se coluna não existir no Postgres
+            if (result.error && (result.error.code === '42703' || result.error.code === 'PGRST204' || result.error.message.includes('link_inscricao'))) {
+                result = await supabase
+                    .from("events")
+                    .update(eventDataFallback)
+                    .eq("id", editingEvent.id);
+            }
         } else {
             result = await supabase
                 .from("events")
-                .insert([eventData]);
+                .insert([eventDataWithCol]);
+
+            // Fallback se coluna não existir no Postgres
+            if (result.error && (result.error.code === '42703' || result.error.code === 'PGRST204' || result.error.message.includes('link_inscricao'))) {
+                result = await supabase
+                    .from("events")
+                    .insert([eventDataFallback]);
+            }
         }
 
         if (result.error) {
@@ -90,6 +148,7 @@ export default function EventosAdminPage() {
             setIsDialogOpen(false);
             setEditingEvent(null);
             setEditorContent("");
+            setLinkInscricao("");
             fetchEvents();
         }
         setIsSubmitting(false);
@@ -140,10 +199,18 @@ export default function EventosAdminPage() {
                     if (!open) {
                         setEditingEvent(null);
                         setEditorContent("");
+                        setLinkInscricao("");
                     }
                 }}>
                     <DialogTrigger asChild>
-                        <Button className="bg-brand-blue hover:bg-brand-blue/90 text-white font-bold rounded-xl h-12 px-6 shadow-lg shadow-brand-blue/20">
+                        <Button
+                            onClick={() => {
+                                setEditingEvent(null);
+                                setEditorContent("");
+                                setLinkInscricao("");
+                            }}
+                            className="bg-brand-blue hover:bg-brand-blue/90 text-white font-bold rounded-xl h-12 px-6 shadow-lg shadow-brand-blue/20"
+                        >
                             <Plus className="w-5 h-5 mr-2" />
                             Novo Evento
                         </Button>
@@ -237,6 +304,22 @@ export default function EventosAdminPage() {
 
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-brand-blue uppercase tracking-widest flex items-center gap-2">
+                                        <LinkIcon className="w-4 h-4 text-brand-gold" /> Link da Landing Page / Inscrição (LP)
+                                    </label>
+                                    <Input
+                                        name="link_inscricao"
+                                        value={linkInscricao}
+                                        onChange={(e) => setLinkInscricao(e.target.value)}
+                                        placeholder="Ex: https://eventos.sistemaprover.com.br/... ou /festa-rei-jesus"
+                                        className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
+                                    />
+                                    <p className="text-[11px] text-gray-400">
+                                        Insira a URL da página de inscrições ou Landing Page oficial para gerar o botão aos fiéis.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-brand-blue uppercase tracking-widest flex items-center gap-2">
                                         <AlertCircle className="w-4 h-4" /> Descrição
                                     </label>
                                     <div className="space-y-2">
@@ -302,13 +385,28 @@ export default function EventosAdminPage() {
                                     <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                                         <div className="flex items-center gap-1">
                                             <Calendar className="w-4 h-4 text-brand-gold" />
-                                            {new Date(event.date).toLocaleDateString("pt-BR")}
+                                            {new Date(event.date + (event.date?.includes('T') ? '' : 'T12:00:00')).toLocaleDateString("pt-BR")}
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <Clock className="w-4 h-4 text-brand-gold" />
                                             {event.time}
                                         </div>
                                     </div>
+                                    {(() => {
+                                        const lp = event.link_inscricao || extractLinkFromDescricao(event.description).link;
+                                        if (!lp) return null;
+                                        return (
+                                            <a
+                                                href={lp}
+                                                target={lp.startsWith("http") ? "_blank" : undefined}
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md mt-2 hover:bg-emerald-100 transition-colors"
+                                            >
+                                                <ExternalLink className="w-3 h-3 text-emerald-600" />
+                                                LP / Inscrição
+                                            </a>
+                                        );
+                                    })()}
                                 </div>
                                 <div className="flex justify-between items-center pt-4 border-t border-gray-100">
                                     <div className="flex items-center gap-1 text-xs text-gray-400 truncate">
@@ -321,7 +419,9 @@ export default function EventosAdminPage() {
                                             size="icon"
                                             onClick={() => {
                                                 setEditingEvent(event);
-                                                setEditorContent(event.description || "");
+                                                const extracted = extractLinkFromDescricao(event.description);
+                                                setEditorContent(extracted.cleanDesc || "");
+                                                setLinkInscricao(event.link_inscricao || extracted.link || "");
                                                 setIsDialogOpen(true);
                                             }}
                                             className="h-10 w-10 rounded-xl text-brand-blue hover:bg-brand-blue/5"

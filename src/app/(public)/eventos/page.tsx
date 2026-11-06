@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Metadata } from "next";
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon, MapPin, Clock, ArrowRight } from "lucide-react";
+import { Calendar as CalendarIcon, MapPin, Clock, ArrowRight, ExternalLink } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import FestaCountdown from "@/components/public/festa-countdown";
 
@@ -11,6 +11,21 @@ export const metadata: Metadata = {
 };
 
 export const revalidate = 0;
+
+function extractEventLink(event: any): { cleanDesc: string; link: string } {
+    const rawLink = event.link_inscricao;
+    const desc = event.description || "";
+    const markerMatch = desc.match(/<!--\s*lp_link:\s*([^\s>]+)\s*-->/);
+    const textMatch = desc.match(/(?:Link Inscrição|Link LP|Inscrição|Landing Page):\s*(https?:\/\/[^\s]+)/i);
+
+    const detectedLink = rawLink || (markerMatch ? markerMatch[1] : (textMatch ? textMatch[1] : ""));
+    const cleanDesc = desc
+        .replace(/<!--\s*lp_link:\s*[^\s>]+\s*-->\s*/g, "")
+        .replace(/(?:Link Inscrição|Link LP|Inscrição|Landing Page):\s*https?:\/\/[^\s]+/gi, "")
+        .trim();
+
+    return { cleanDesc, link: detectedLink };
+}
 
 async function getEvents() {
     const { data, error } = await supabase
@@ -51,41 +66,56 @@ export default async function EventosPage() {
                 <div className="max-w-5xl mx-auto px-4">
                     {displayEvents.length > 0 ? (
                         <div className="space-y-8">
-                            {displayEvents.map((event: any) => (
-                                <div key={event.id} className="bg-white rounded-3xl overflow-hidden shadow-sm border flex flex-col md:flex-row hover:shadow-xl transition-all duration-300">
-                                    <div className="bg-brand-blue md:w-48 p-8 flex flex-col items-center justify-center text-white text-center">
-                                        <span className="text-sm font-bold uppercase text-brand-gold mb-2">{event.category || "Evento"}</span>
-                                        <CalendarIcon className="w-8 h-8 mb-2" />
-                                        <span className="text-lg font-bold leading-tight">
-                                            {event.date && event.date.includes('-')
-                                                ? new Date(event.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-                                                : (event.date ? event.date.split(',')[0] : "A definir")}
-                                        </span>
-                                    </div>
-                                    <div className="flex-1 p-8 md:p-12 space-y-4">
-                                        <h3 className="text-3xl font-bold text-gray-900">{event.title}</h3>
-                                        <p className="text-gray-600 leading-relaxed">{event.description}</p>
-                                        <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-500">
-                                            <div className="flex items-center gap-2">
-                                                <Clock className="w-5 h-5 text-brand-gold" />
-                                                <span>{event.time || "A confirmar"}</span>
+                            {displayEvents.map((event: any) => {
+                                const { cleanDesc, link } = extractEventLink(event);
+                                return (
+                                    <div key={event.id} className="bg-white rounded-3xl overflow-hidden shadow-sm border flex flex-col md:flex-row hover:shadow-xl transition-all duration-300">
+                                        <div className="bg-brand-blue md:w-48 p-8 flex flex-col items-center justify-center text-white text-center">
+                                            <span className="text-sm font-bold uppercase text-brand-gold mb-2">{event.category || "Evento"}</span>
+                                            <CalendarIcon className="w-8 h-8 mb-2" />
+                                            <span className="text-lg font-bold leading-tight">
+                                                {event.date && event.date.includes('-')
+                                                    ? new Date(event.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+                                                    : (event.date ? event.date.split(',')[0] : "A definir")}
+                                            </span>
+                                        </div>
+                                        <div className="flex-1 p-8 md:p-12 space-y-4">
+                                            <h3 className="text-3xl font-bold text-gray-900">{event.title}</h3>
+                                            <p className="text-gray-600 leading-relaxed line-clamp-3">{cleanDesc}</p>
+                                            <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-500">
+                                                <div className="flex items-center gap-2">
+                                                    <Clock className="w-5 h-5 text-brand-gold" />
+                                                    <span>{event.time || "A confirmar"}</span>
+                                                </div>
+                                                <div className="flex items-start gap-2">
+                                                    <MapPin className="w-5 h-5 text-brand-gold flex-shrink-0" />
+                                                    <span>{event.location}</span>
+                                                </div>
                                             </div>
-                                            <div className="flex items-start gap-2">
-                                                <MapPin className="w-5 h-5 text-brand-gold flex-shrink-0" />
-                                                <span>{event.location}</span>
+                                            <div className="pt-6 flex flex-wrap gap-3 items-center">
+                                                <Link href={`/eventos/${event.id}`}>
+                                                    <Button className="bg-brand-blue text-white group">
+                                                        Mais Informações
+                                                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                                    </Button>
+                                                </Link>
+                                                {link && (
+                                                    <Button asChild className="bg-brand-gold hover:bg-brand-gold/90 text-white font-bold shadow-md">
+                                                        <a
+                                                            href={link}
+                                                            target={link.startsWith("http") ? "_blank" : undefined}
+                                                            rel="noopener noreferrer"
+                                                        >
+                                                            Inscrever-se / LP
+                                                            <ExternalLink className="w-4 h-4 ml-2" />
+                                                        </a>
+                                                    </Button>
+                                                )}
                                             </div>
                                         </div>
-                                        <div className="pt-6">
-                                            <Link href={`/eventos/${event.id}`}>
-                                                <Button className="bg-brand-blue text-white group">
-                                                    Mais Informações
-                                                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                                                </Button>
-                                            </Link>
-                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed border-gray-200 max-w-2xl mx-auto shadow-sm">
